@@ -17,6 +17,7 @@ function App() {
   const clickRemoveGroup = (e, i) => {
     let filter = getFilter;
     filter.splice(i, 1);
+    setSelect(null);
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -160,7 +161,12 @@ function App() {
                   {op_elem}
                 </select>
               </td>
-              <td>{rec.value}</td>
+              <td>
+                <input
+                  value={rec.value}
+                  onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value)}}
+                  />
+              </td>
             </tr>
           </table>
           <hr />
