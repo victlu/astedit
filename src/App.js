@@ -5,11 +5,13 @@ function App() {
   const [getCount, setCount] = React.useState(0);
   const [getFilter, setFilter] = React.useState(null);
   const [getSelect, setSelect] = React.useState(null);
+  const [getFields, setFields] = React.useState(["timestamp", "record", "pid", "message"]);
 
   const clickAddGroup = (e, i) => {
     let filter = getFilter;
-    let obj = [ { field: "new", op: "=", value: "new-" + getCount } ];
+    let obj = [ { field: getFields[0], op: "==", value: "new" } ];
     filter.splice(i+1, 0, obj);
+    setSelect({ row: i, term: 0});
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -39,7 +41,8 @@ function App() {
 
   const clickAddTerm = (e, i) => {
     let filter = getFilter;
-    filter[i].push({ field: "new", op: "=", value: "new"});
+    filter[i].push({ field: getFields[0], op: "==", value: "new"});
+    setSelect({ row: i, term: filter[i].length-1});
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -161,7 +164,7 @@ function App() {
       }
 
       let field_elem = [];
-      let fields = ["field1", "timestamp", "record2", "pid", "message"];
+      let fields = getFields;
       for (let o of fields)
       {
         field_elem.push(<option>{o}</option>);
