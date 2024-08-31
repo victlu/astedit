@@ -11,7 +11,7 @@ function App() {
     let filter = getFilter;
     let obj = [ { field: getFields[0], op: "==", value: "new" } ];
     filter.splice(i+1, 0, obj);
-    setSelect({ row: i, term: 0});
+    setSelect({ row: i+1, term: 0});
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -80,17 +80,7 @@ function App() {
   let filter = getFilter;
   if (!filter)
   {
-    filter = [
-      [
-        { field: "hello1", op: "=", value: "that1" },
-        { field: "hello2", op: "=", value: "that2" },
-        { field: "hello3", op: "=", value: "that2" },
-      ],
-      [
-        { field: "hello3", op: "=", value: "that3" },
-        { field: "hello4", op: "=", value: "that4" },
-      ]
-    ];
+    filter = []
     setFilter(filter);
   }
 
@@ -134,12 +124,16 @@ function App() {
       onClick={ e => { clickAddTerm(e, i);}}
       >+</span>);
 
+    let field_conn = "";
     if (i > 0)
     {
-      body.push(<div>or</div>)
+      field_conn = <span className="mr-3 fs-6 fw-light">or</span>
     }
     body.push(<div>
-      <span className="badge bg-secondary mr-1">{fields}</span>
+      <span className="badge bg-secondary mr-1 mb-3 pt-3 pb-3">
+        {field_conn}
+        {fields}
+      </span>
       <span 
         className="badge bg-success cursor-clickable mr-1"
         onClick={ e => { clickAddGroup(e, i);}}
@@ -171,7 +165,7 @@ function App() {
       }
 
       body.push(
-        <div className="container p-4 badge bg-primary mt-3">
+        <div className="container p-4 badge bg-primary mt-3 mb-3">
           <div className="row align-items-center mb-3">
             <div className="col-1">
             Field:
@@ -235,11 +229,13 @@ function App() {
       <div>
       <span 
       className="badge bg-success cursor-clickable mr-1"
-      onClick={ e => { clickAddGroup(e, 0);}}
+      onClick={ e => { clickAddGroup(e, -1);}}
       >+</span>
       </div>
     );
   }
+
+  // Generate JSON
 
   body.push( <hr/>);
 
