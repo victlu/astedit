@@ -37,6 +37,25 @@ function App() {
     {
       setSelect({ row: i, term: j});
     }
+    setCount(getCount+1);
+  }
+
+  const clickUpdateItem = (e, i, j, field, op, val) => {
+    let filter = getFilter;
+    if (field)
+    {
+      filter[i][j].field = field;
+    }
+    if (op)
+    {
+      filter[i][j].op = op;
+    }
+    if (val)
+    {
+      filter[i][j].value = val;
+    }
+    setFilter(filter);
+    setCount(getCount+1);
   }
 
   let filter = getFilter;
@@ -64,26 +83,16 @@ function App() {
     {
       let rec = filter[i][j];
 
-      let cond = <span
-        className="badge bg-primary cursor-clickable mr-1"
-        onClick={ e => { clickEditItem(e, i, j)}}
-        >{rec.field} {rec.op} {rec.value}</span>
-
+      let sel="bg-primary"
       if (getSelect && getSelect.row === i && getSelect.term === j)
       {
-        cond = <span
-          className="badge bg-success mr-1">
-            <div>{rec.field}</div>
-            <div>{rec.op}</div>
-            <div>{rec.value}</div>
-            <div>
-              <span
-              className="cursor-clickable"
-              onClick={ e => { clickEditItem(e, i, j)}}
-              >Close</span>
-            </div>
-          </span>
+        sel = "bg-danger"
       }
+
+      let cond = <span
+        className={"badge cursor-clickable mr-1 " + sel}
+        onClick={ e => { clickEditItem(e, i, j)}}
+        >{rec.field} {rec.op} {rec.value}</span>
 
       if (j > 0)
       {
@@ -112,6 +121,52 @@ function App() {
         onClick={ e => { clickRemoveGroup(e, i);}}
         >-</span>
       </div>);
+
+    if (getSelect && getSelect.row === i)
+    {
+      let j = getSelect.term;
+      let rec = filter[i][j];
+
+      let op_elem = [];
+      let ops = ["==", "!=", "<", ">"];
+      for (let o of ops)
+      {
+        op_elem.push(<option>{o}</option>);
+      }
+
+      let field_elem = [];
+      let fields = ["field1", "timestamp", "record2", "pid", "message"];
+      for (let o of fields)
+      {
+        field_elem.push(<option>{o}</option>);
+      }
+
+      body.push(
+        <div>
+          <hr />
+          <table>
+            <tr>
+              <td>
+                <select className="form-select"
+                  value={rec.field}
+                  onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
+                  {field_elem}
+                </select>
+              </td>
+              <td>
+                <select className="form-select"
+                  value={rec.op}
+                  onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
+                  {op_elem}
+                </select>
+              </td>
+              <td>{rec.value}</td>
+            </tr>
+          </table>
+          <hr />
+        </div>
+      );
+    }
   }
 
   if (filter.length == 0)
@@ -129,12 +184,12 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Edit AST</p>
+        <p>Agent-Side Transform: Filter Editor</p>
       </header>
-      <body className="App-body">
+      <div className="App-body">
         <div>Filter:</div>
         {body}
-      </body>
+      </div>
     </div>
   );
 }
