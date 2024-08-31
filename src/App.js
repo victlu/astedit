@@ -22,6 +22,21 @@ function App() {
     setCount(getCount+1);
   }
 
+  const clickRemoveTerm = (e, i, j) => {
+    let filter = getFilter;
+    if (filter[i].length === 1)
+    {
+      filter.splice(i, 1);
+    }
+    else
+    {
+      filter[i].splice(j, 1);
+    }
+    setSelect(null);
+    setFilter(filter);
+    setCount(getCount+1);
+  }
+
   const clickAddTerm = (e, i) => {
     let filter = getFilter;
     filter[i].push({ field: "new", op: "=", value: "new"});
@@ -84,20 +99,29 @@ function App() {
     {
       let rec = filter[i][j];
 
-      let sel="bg-primary"
+      let cond;
+
       if (getSelect && getSelect.row === i && getSelect.term === j)
       {
-        sel = "bg-danger"
+        cond = <span
+          className="badge fs-4 bg-primary cursor-clickable mr-1"
+          >...</span>
       }
-
-      let cond = <span
-        className={"badge cursor-clickable mr-1 " + sel}
-        onClick={ e => { clickEditItem(e, i, j)}}
-        >{rec.field} {rec.op} {rec.value}</span>
+      else
+      {
+        cond = <span
+          className="badge fs-6 bg-info cursor-clickable mr-1"
+          onClick={ e => { clickEditItem(e, i, j)}}
+          >
+            <span className="badge rounded-pill bg-light text-dark">{rec.field}</span>
+            <span> {rec.op} </span>
+            <span className="badge rounded-pill bg-light text-dark">{rec.value}</span>
+          </span>
+      }
 
       if (j > 0)
       {
-        fields.push(<span className="cursor-normal"> AND </span>);
+        fields.push(<span className="cursor-normal fs-6 fw-light"> and </span>);
       }
       fields.push(cond);
     }
@@ -109,7 +133,7 @@ function App() {
 
     if (i > 0)
     {
-      body.push(<div>OR</div>)
+      body.push(<div>or</div>)
     }
     body.push(<div>
       <span className="badge bg-secondary mr-1">{fields}</span>
@@ -123,6 +147,7 @@ function App() {
         >-</span>
       </div>);
 
+    // Show Term editing box
     if (getSelect && getSelect.row === i)
     {
       let j = getSelect.term;
@@ -143,33 +168,59 @@ function App() {
       }
 
       body.push(
-        <div>
-          <hr />
-          <table>
-            <tr>
-              <td>
-                <select className="form-select"
-                  value={rec.field}
-                  onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
-                  {field_elem}
-                </select>
-              </td>
-              <td>
-                <select className="form-select"
-                  value={rec.op}
-                  onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
-                  {op_elem}
-                </select>
-              </td>
-              <td>
-                <input
-                  value={rec.value}
-                  onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value)}}
-                  />
-              </td>
-            </tr>
-          </table>
-          <hr />
+        <div className="container p-4 badge bg-primary mt-3">
+          <div className="row align-items-center mb-3">
+            <div className="col-1">
+            Field:
+            </div>
+            <div className="col-4">
+              <select className="form-select"
+                value={rec.field}
+                onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
+                {field_elem}
+              </select>
+            </div>
+          </div>
+
+          <div className="row align-items-center mb-3">
+            <div className="col-1">
+            Operator:
+            </div>
+            <div className="col-2">
+              <select className="form-select"
+                value={rec.op}
+                onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
+                {op_elem}
+              </select>
+            </div>
+          </div>
+
+          <div className="row align-items-center">
+            <div className="col-1">
+              Value:
+            </div>
+            <div className="col-5">
+              <input
+                className="form-control"
+                value={rec.value}
+                onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value)}}
+                />
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col">
+              <hr/>
+              <button
+                className="btn btn-sm btn-success mr-1"
+                onClick={e => {clickRemoveTerm(e, i, j)}}
+                >remove</button>
+              <button
+                className="btn btn-sm btn-success mr-1"
+                onClick={e => {setSelect(null)}}
+                >done</button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -187,13 +238,49 @@ function App() {
     );
   }
 
+  body.push( <hr/>);
+
+  let filterText = "";
+  if (getFilter)
+  {
+    let g = 0;
+    filterText += "{"
+    filterText += "\"filters\":["
+    for (let group of getFilter)
+    {
+      if (g > 0)
+      {
+        filterText += ","
+      }
+      filterText += "["
+
+      let t = 0;
+      for (let term of group)
+      {
+        if (t > 0)
+        {
+          filterText += ","
+        }
+        filterText += "{"
+        filterText += "\"field\":\"" + term.field + "\","
+        filterText += "\"op\":\"" + term.op + "\","
+        filterText += "\"value\":\"" + term.value + "\""
+        filterText += "}"
+        t++;
+      }
+      filterText += "]"
+      g++;
+    }
+    filterText += "]}"
+  }
+  body.push(<p>{filterText}</p>)
+
   return (
     <div className="App">
       <header className="App-header">
         <p>Agent-Side Transform: Filter Editor</p>
       </header>
-      <div className="App-body">
-        <div>Filter:</div>
+      <div className="App-body mt-4">
         {body}
       </div>
     </div>

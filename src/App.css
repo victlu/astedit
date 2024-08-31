@@ -42,7 +42,12 @@
 }
 
 .mr-1 {
-  margin-right: 2px;
+  margin-right: 4px;
+}
+
+.box {
+  border: 1px solid black;
+  margin: 8px;
 }
 
 @keyframes App-logo-spin {
