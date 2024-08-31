@@ -1,0 +1,61 @@
+{
+  "extensionName": "AgentSideTransformExtension",
+  "name": "AgentSideTransformExtDataSource",
+  "streams": [
+    "Microsoft-OperationLog"
+  ],
+  "extensionSettings": {
+    "iisLogs": [
+      {
+        "name": "iisLogsDataSource",
+        "streams": [
+          "Custom-TransformationTable"
+        ],
+        "agentTransform": {
+          "maxBatchTimeoutInSeconds": 60,
+          "maxBatchCount": 1000,
+          "transform": {
+            "filters": [
+              [
+                {
+                  "field": "cs_method",
+                  "op": "==",
+                  "value": "xyz"
+                },
+                {
+                  "field": "cs_bytes",
+                  "op": "!=",
+                  "value": 10
+                }
+              ],
+              [
+                {
+                  "field": "cs_method",
+                  "op": "==",
+                  "value": "xyz"
+                },
+                {
+                  "field": "cs_username",
+                  "op": "!=",
+                  "value": "xyz"
+                }
+              ]
+            ],
+            "aggregates": {
+              "distinct": [
+                "sc_status",
+                "sc_substatus"
+              ],
+              "avg": [
+                "cs_bytes"
+              ],
+              "sum": [
+                "time_taken"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
