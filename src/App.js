@@ -5,7 +5,32 @@ function App() {
   const [getCount, setCount] = React.useState(0);
   const [getFilter, setFilter] = React.useState(null);
   const [getSelect, setSelect] = React.useState(null);
-  const [getFields, setFields] = React.useState(["timestamp", "record", "pid", "message"]);
+  const [getFields, setFields] = React.useState("Windows Events");
+
+  const datasources = {
+    "Performance Counters": [
+      { col: "CounterName", ty: "string" },
+      { col: "CounterValue", ty: "float" },
+      { col: "SampleRate", ty: "int" },
+      { col: "Counter", ty: "string" },
+      { col: "Instance", ty: "string" },
+    ],
+    "Windows Events": [
+      { col: "PublisherId", ty: "string" },
+      { col: "TimeCreated", ty: "datetime" },
+      { col: "PublisherName", ty: "int" },
+      { col: "Channel", ty: "string" },
+      { col: "LoggingComputer", ty: "string" },
+      { col: "EventNumber", ty: "int" },
+      { col: "EventCategory", ty: "int" },
+      { col: "EventLevel", ty: "string" },
+      { col: "UserName", ty: "string" },
+      { col: "RawXml", ty: "string" },
+      { col: "EventDescription", ty: "string" },
+      { col: "RenderingInfo", ty: "string" },
+      { col: "EventRecordId", ty: "int" },
+    ]
+  };
 
   const clickAddGroup = (e, i) => {
     let filter = getFilter;
@@ -59,6 +84,12 @@ function App() {
     setCount(getCount+1);
   }
 
+  const clickUpdateDataSource = (e, target) => {
+    setFields(target);
+    setFilter(null);
+    console.log("clickUpdateDataSource", target);
+  }
+
   const clickUpdateItem = (e, i, j, field, op, val) => {
     let filter = getFilter;
     if (field)
@@ -85,6 +116,31 @@ function App() {
   }
 
   let body = [];
+
+  // **********************************
+  // Select DataSouces
+
+  let ds = [];
+  Object.keys(datasources).forEach((o) => {
+    ds.push(<option value={o}>{o}</option>)
+  })
+
+  body.push(<div className="container mb-3">
+    <div className="col">
+      Data Source:
+    </div>
+    <div className="col col-4">
+      <select className="form-select"
+        value={getFields}
+        onChange={e => { clickUpdateDataSource(e, e.target.value)}}>
+        {ds}
+      </select>
+    </div>
+  </div>);
+
+  // **********************************
+  // Edit Filter Groups
+
   for (let i = 0; i < filter.length; i++)
   {
     let fields = [];
@@ -158,11 +214,10 @@ function App() {
       }
 
       let field_elem = [];
-      let fields = getFields;
-      for (let o of fields)
-      {
-        field_elem.push(<option>{o}</option>);
-      }
+      let fields = datasources[getFields];
+      fields.forEach((o) => {
+        field_elem.push(<option>{o.col}</option>);
+      });
 
       body.push(
         <div className="container p-4 badge bg-primary mt-3 mb-3">
@@ -223,7 +278,7 @@ function App() {
     }
   }
 
-  if (filter.length == 0)
+  if (filter.length === 0)
   {
     body.push(
       <div>
@@ -235,6 +290,7 @@ function App() {
     );
   }
 
+  // **********************************
   // Generate JSON
 
   body.push( <hr/>);
