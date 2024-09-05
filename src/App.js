@@ -34,7 +34,7 @@ function App() {
 
   const clickAddGroup = (e, i) => {
     let filter = getFilter;
-    let obj = [ { field: getFields[0], op: "==", value: "new" } ];
+    let obj = [ { field: "new", op: "==", value: "new" } ];
     filter.splice(i+1, 0, obj);
     setSelect({ row: i+1, term: 0});
     setFilter(filter);
@@ -64,9 +64,9 @@ function App() {
     setCount(getCount+1);
   }
 
-  const clickAddTerm = (e, i) => {
+  const clickAddTerm = (e, i, j) => {
     let filter = getFilter;
-    filter[i].push({ field: getFields[0], op: "==", value: "new"});
+    filter[i].splice(j+1, 0, { field: "new", op: "==", value: "new"});
     setSelect({ row: i, term: filter[i].length-1});
     setFilter(filter);
     setCount(getCount+1);
@@ -139,144 +139,138 @@ function App() {
   </div>);
 
   // **********************************
-  // Edit Filter Groups
 
+  let field_elem = [];
+  let fields1 = datasources[getFields];
+  fields1.forEach((o) => {
+    field_elem.push(<option>{o.col}</option>);
+  });
+
+  let op_elem = [];
+  let ops = ["==", "!=", "<", ">"];
+  for (let o of ops)
+  {
+    op_elem.push(<option>{o}</option>);
+  }
+
+  // Filter Groups
+  let groups = [];
   for (let i = 0; i < filter.length; i++)
   {
     let fields = [];
+
+    // Filter Terms
     for (let j = 0; j < filter[i].length; j++)
     {
       let rec = filter[i][j];
+      let term = [];
 
-      let cond;
-
-      if (getSelect && getSelect.row === i && getSelect.term === j)
-      {
-        cond = <span
-          className="badge fs-4 bg-primary cursor-clickable mr-1"
-          >...</span>
-      }
-      else
-      {
-        cond = <span
-          className="badge fs-6 bg-info cursor-clickable mr-1"
-          onClick={ e => { clickEditItem(e, i, j)}}
-          >
-            <span className="badge rounded-pill bg-light text-dark">{rec.field}</span>
-            <span> {rec.op} </span>
-            <span className="badge rounded-pill bg-light text-dark">{rec.value}</span>
-          </span>
-      }
-
-      if (j > 0)
-      {
-        fields.push(<span className="cursor-normal fs-6 fw-light"> and </span>);
-      }
-      fields.push(cond);
-    }
-
-    fields.push(<span 
-      className="badge bg-success cursor-clickable mr-1"
-      onClick={ e => { clickAddTerm(e, i);}}
-      >+</span>);
-
-    let field_conn = "";
-    if (i > 0)
-    {
-      field_conn = <span className="mr-3 fs-6 fw-light">or</span>
-    }
-    body.push(<div>
-      <span className="badge bg-secondary mr-1 mb-3 pt-3 pb-3">
-        {field_conn}
-        {fields}
-      </span>
-      <span 
-        className="badge bg-success cursor-clickable mr-1"
-        onClick={ e => { clickAddGroup(e, i);}}
-        >+</span>
-      <span 
-        className="badge bg-success cursor-clickable"
-        onClick={ e => { clickRemoveGroup(e, i);}}
-        >-</span>
-      </div>);
-
-    // Show Term editing box
-    if (getSelect && getSelect.row === i)
-    {
-      let j = getSelect.term;
-      let rec = filter[i][j];
-
-      let op_elem = [];
-      let ops = ["==", "!=", "<", ">"];
-      for (let o of ops)
-      {
-        op_elem.push(<option>{o}</option>);
-      }
-
-      let field_elem = [];
-      let fields = datasources[getFields];
-      fields.forEach((o) => {
-        field_elem.push(<option>{o.col}</option>);
-      });
-
-      body.push(
-        <div className="container p-4 badge bg-primary mt-3 mb-3">
-          <div className="row align-items-center mb-3">
-            <div className="col-1">
+      term.push(
+        <div className="row">
+          <div className="col col-5 fw-light">
             Field:
-            </div>
-            <div className="col-4">
-              <select className="form-select"
-                value={rec.field}
-                onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
-                {field_elem}
-              </select>
-            </div>
           </div>
-
-          <div className="row align-items-center mb-3">
-            <div className="col-1">
-            Operator:
-            </div>
-            <div className="col-2">
-              <select className="form-select"
-                value={rec.op}
-                onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
-                {op_elem}
-              </select>
-            </div>
+          <div className="col col-2 fw-light">
+            Operation:
           </div>
+          <div className="col col-5 fw-light">
+            Value:
+          </div>
+        </div>);
 
-          <div className="row align-items-center">
-            <div className="col-1">
-              Value:
-            </div>
-            <div className="col-5">
-              <input
+      term.push(
+        <div className="row">
+          <div className="col col-5">
+            <select className="form-select"
+              value={rec.field}
+              onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
+              {field_elem}
+            </select>
+          </div>
+          <div className="col col-2">
+            <select className="form-select"
+              value={rec.op}
+              onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
+              {op_elem}
+            </select>
+          </div>
+          <div className="col col-5">
+            <input
                 className="form-control"
                 value={rec.value}
                 onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value)}}
                 />
-            </div>
           </div>
+        </div>);
 
-          <div className="row">
-            <div className="col">
-              <hr/>
-              <button
-                className="btn btn-sm btn-success mr-1"
-                onClick={e => {clickRemoveTerm(e, i, j)}}
-                >remove</button>
-              <button
-                className="btn btn-sm btn-success mr-1"
-                onClick={e => {setSelect(null)}}
-                >done</button>
-            </div>
+      term.push(
+        <div className="row">
+          <div className="col-10">
+          </div>
+          <div className="col col-2 mt-2">
+            <span className="badge bg-success cursor-clickable mr-1"
+              onClick={ e => { clickAddTerm(e, i, j);}}
+              >+</span>
+            <span className="badge bg-danger cursor-clickable"
+              onClick={ e => { clickRemoveTerm(e, i, j);}}
+              >-</span>
           </div>
         </div>
-      );
+      )
+
+      if (j > 0)
+      {
+        fields.push(<div className="row mb-3">
+          <div className="col fw-light">
+            and
+          </div>
+        </div>);
+      }
+
+      fields.push(<div className="container p-2 mb-3 bg-primary">
+        {term}
+        </div>);
     }
+
+    let field_ctrl = [];
+    field_ctrl.push(
+      <div className="container p-0">
+        <div className="row">
+          <div className="col col-11">
+          </div>
+          <div className="col col-1">
+            <div className="badge bg-success cursor-clickable mr-1"
+              onClick={e => { clickAddGroup(e, i); }}
+            >+</div>
+            <div className="badge bg-danger cursor-clickable"
+              onClick={e => { clickRemoveGroup(e, i); }}
+            >-</div>
+          </div>
+        </div>
+      </div>);
+
+    if (i > 0)
+    {
+      groups.push(<div className="container mb-3">
+        <div className="row">
+          <div className="col text-center fw-light">
+            or
+          </div>
+        </div>
+      </div>);
+    }
+
+    groups.push(<div className="row">
+      <div className="row badge bg-secondary mr-1 mb-3 pt-3 pb-3">
+        {fields}
+        {field_ctrl}
+      </div>
+      </div>);
   }
+
+  body.push(<div className="container">
+    {groups}
+  </div>)
 
   if (filter.length === 0)
   {
@@ -296,12 +290,12 @@ function App() {
   body.push( <hr/>);
 
   let filterText = "";
-  if (getFilter)
+  if (filter)
   {
     let g = 0;
     filterText += "{"
     filterText += "\"filters\":["
-    for (let group of getFilter)
+    for (let group of filter)
     {
       if (g > 0)
       {
