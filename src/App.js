@@ -188,6 +188,7 @@ function App() {
   // **********************************
 
   let refDownload = React.useRef()
+  let refLoad = React.useRef()
 
   let filter = getFilter;
   if (!filter)
@@ -203,7 +204,7 @@ function App() {
   body.push(<div>
     <div className='container'>
       <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load ...</label>
-      <input id='pickfile' className='hidden' type='file' onChange={(e) => {
+      <input id='pickfile' ref={refLoad} className='hidden' type='file' onChange={(e) => {
         let file = e.target.files[0]
         if (file)
         {
@@ -213,8 +214,10 @@ function App() {
             clickUpdateJson(null, content)
           }
 
+          setFilter()
           reader.readAsText(file)
         }
+        refLoad.current.value = null
       }}/>
 
       <span className="badge cursor-clickable bg-success mx-2" onClick={() => {
