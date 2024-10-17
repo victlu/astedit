@@ -41,6 +41,10 @@
   cursor: pointer;
 }
 
+.hidden {
+  display: none;
+}
+
 .mr-1 {
   margin-right: 4px;
 }

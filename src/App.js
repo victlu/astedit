@@ -3,8 +3,7 @@ import './App.css';
 
 function App() {
   const [getCount, setCount] = React.useState(0);
-  const [getFilter, setFilter] = React.useState(null);
-  const [getSelect, setSelect] = React.useState(null);
+  const [getFilter, setFilter] = React.useState();
   const [getFields, setFields] = React.useState("Windows Events");
 
   const datasources = {
@@ -62,7 +61,6 @@ function App() {
     let filter = getFilter;
     let obj = [ { field: "new", op: "==", value: "new" } ];
     filter.splice(i+1, 0, obj);
-    setSelect({ row: i+1, term: 0});
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -70,7 +68,6 @@ function App() {
   const clickRemoveGroup = (e, i) => {
     let filter = getFilter;
     filter.splice(i, 1);
-    setSelect(null);
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -85,7 +82,6 @@ function App() {
     {
       filter[i].splice(j, 1);
     }
-    setSelect(null);
     setFilter(filter);
     setCount(getCount+1);
   }
@@ -93,20 +89,7 @@ function App() {
   const clickAddTerm = (e, i, j) => {
     let filter = getFilter;
     filter[i].splice(j+1, 0, { field: "new", op: "==", value: "new"});
-    setSelect({ row: i, term: filter[i].length-1});
     setFilter(filter);
-    setCount(getCount+1);
-  }
-
-  const clickEditItem = (e, i, j) => {
-    if (getSelect && getSelect.row === i && getSelect.term === j)
-    {
-      setSelect(null);
-    }
-    else
-    {
-      setSelect({ row: i, term: j});
-    }
     setCount(getCount+1);
   }
 
@@ -160,12 +143,51 @@ function App() {
 
   const clickClipboardPaste = (e) =>
   {
-    let jsonText = navigator.clipboard.readText().then( jsonText => {
+    navigator.clipboard.readText().then( jsonText => {
       clickUpdateJson(e, jsonText);
     });
   }
 
+  const GetFilterJson = (filter) => {
+    let filterText = "";
+    if (filter)
+    {
+      let g = 0;
+      filterText += "{"
+      filterText += "\"filters\":["
+      for (let group of filter)
+      {
+        if (g > 0)
+        {
+          filterText += ","
+        }
+        filterText += "["
+  
+        let t = 0;
+        for (let term of group)
+        {
+          if (t > 0)
+          {
+            filterText += ","
+          }
+          filterText += "{"
+          filterText += "\"field\":\"" + term.field + "\","
+          filterText += "\"op\":\"" + term.op + "\","
+          filterText += "\"value\":\"" + term.value + "\""
+          filterText += "}"
+          t++;
+        }
+        filterText += "]"
+        g++;
+      }
+      filterText += "]}"
+    }
+    return filterText
+  }
+
   // **********************************
+
+  let refDownload = React.useRef()
 
   let filter = getFilter;
   if (!filter)
@@ -175,6 +197,40 @@ function App() {
   }
 
   let body = [];
+
+  // **********************************
+
+  body.push(<div>
+    <div className='container'>
+      <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load ...</label>
+      <input id='pickfile' className='hidden' type='file' onChange={(e) => {
+        let file = e.target.files[0]
+        if (file)
+        {
+          let reader = new FileReader()
+          reader.onload = (e) => {
+            let content = e.target.result
+            clickUpdateJson(null, content)
+          }
+
+          reader.readAsText(file)
+        }
+      }}/>
+
+      <span className="badge cursor-clickable bg-success mx-2" onClick={() => {
+        let content = GetFilterJson(getFilter)
+        let blob = new Blob([content], { type: 'application/json'})
+        let url = URL.createObjectURL(blob)
+        refDownload.current.href = url
+        refDownload.current?.click()
+        refDownload.current.href = '#'
+        URL.revokeObjectURL(url)
+      }}>Save ...</span>
+
+      <a href='#' ref={refDownload} className="hidden" download='filter.json'>Save ...</a>
+    </div>
+    <hr />
+  </div>)
 
   // **********************************
   // Select DataSouces
@@ -362,39 +418,7 @@ function App() {
   // **********************************
   // Generate JSON
 
-  let filterText = "";
-  if (filter)
-  {
-    let g = 0;
-    filterText += "{"
-    filterText += "\"filters\":["
-    for (let group of filter)
-    {
-      if (g > 0)
-      {
-        filterText += ","
-      }
-      filterText += "["
-
-      let t = 0;
-      for (let term of group)
-      {
-        if (t > 0)
-        {
-          filterText += ","
-        }
-        filterText += "{"
-        filterText += "\"field\":\"" + term.field + "\","
-        filterText += "\"op\":\"" + term.op + "\","
-        filterText += "\"value\":\"" + term.value + "\""
-        filterText += "}"
-        t++;
-      }
-      filterText += "]"
-      g++;
-    }
-    filterText += "]}"
-  }
+  let filterText = GetFilterJson(getFilter)
 
   body.push(<div className="container">
     <hr/>
