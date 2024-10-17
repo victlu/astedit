@@ -1,0 +1,211 @@
+{
+    "properties": {
+      "immutableId": "dcr-b7cd6e63622741a1b0275cbe3bac0b9e",
+      "dataCollectionEndpointId": "/subscriptions/f417f8a9-2d24-4b37-8240-aa00c5a189d3/resourceGroups/victlu-rg/providers/Microsoft.Insights/dataCollectionEndpoints/victlu-dce-arc",
+      "streamDeclarations": {
+        "Custom-TransformationTable": {
+          "columns": [
+            {
+              "name": "TimeGenerated",
+              "type": "datetime"
+            },
+            {
+              "name": "Column1",
+              "type": "datetime"
+            },
+            {
+              "name": "Column2",
+              "type": "string"
+            },
+            {
+              "name": "Column3",
+              "type": "int"
+            }
+          ]
+        }
+      },
+      "dataSources": {
+        "performanceCounters": [
+          {
+            "streams": [
+              "Microsoft-Perf"
+            ],
+            "samplingFrequencyInSeconds": 60,
+            "counterSpecifiers": [
+              "\\Processor Information(_Total)\\% Processor Time",
+              "\\Processor Information(_Total)\\% Privileged Time",
+              "\\Processor Information(_Total)\\% User Time",
+              "\\Processor Information(_Total)\\Processor Frequency",
+              "\\System\\Processes",
+              "\\Process(_Total)\\Thread Count",
+              "\\Process(_Total)\\Handle Count",
+              "\\System\\System Up Time",
+              "\\System\\Context Switches/sec",
+              "\\System\\Processor Queue Length"
+            ],
+            "name": "perfCounterDataSource60"
+          }
+        ],
+        "windowsEventLogs": [
+          {
+            "streams": [
+              "Microsoft-Event"
+            ],
+            "xPathQueries": [
+              "Application!*[System[(Level=4 or Level=0)]]",
+              "Application!*[System[(Level=1 or Level=2)]]"
+            ],
+            "name": "eventLogsDataSource"
+          }
+        ],
+        "extensions": [
+          {
+            "streams": [
+              "Microsoft-OperationLog"
+            ],
+            "extensionName": "AgentSideTransformExtension",
+            "extensionSettings": {
+              "iisLogs": [
+                {
+                  "name": "iisLogsDataSource",
+                  "streams": [
+                    "Custom-TransformationTable"
+                  ],
+                  "agentTransform": {
+                    "maxBatchTimeoutInSeconds": 60,
+                    "maxBatchCount": 1000,
+                    "transform": {
+                      "filters": [
+                        [
+                          {
+                            "field": "cs_method",
+                            "op": "==",
+                            "value": "xyz"
+                          },
+                          {
+                            "field": "cs_bytes",
+                            "op": "!=",
+                            "value": 10
+                          }
+                        ],
+                        [
+                          {
+                            "field": "cs_method",
+                            "op": "==",
+                            "value": "xyz"
+                          },
+                          {
+                            "field": "cs_username",
+                            "op": "!=",
+                            "value": "xyz"
+                          }
+                        ]
+                      ],
+                      "aggregates": {
+                        "distinct": [
+                          "sc_status",
+                          "sc_substatus"
+                        ],
+                        "avg": [
+                          "cs_bytes"
+                        ],
+                        "sum": [
+                          "time_taken"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "name": "AgentSideTransformExtDataSource"
+          }
+        ],
+        "iisLogs": [
+          {
+            "streams": [
+              "Microsoft-W3CIISLog"
+            ],
+            "name": "iisLogsDataSource"
+          },
+          {
+            "streams": [
+              "Microsoft-W3CIISLog"
+            ],
+            "name": "iisLogsDataSource2"
+          }
+        ]
+      },
+      "destinations": {
+        "logAnalytics": [
+          {
+            "workspaceResourceId": "/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.OperationalInsights/workspaces/AMA-skaliki-laws",
+            "workspaceId": "6613a964-882e-4566-b3ab-8866fd082613",
+            "name": "la--1024707712"
+          },
+          {
+            "workspaceResourceId": "/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/1AOMSWS-rg/providers/Microsoft.OperationalInsights/workspaces/1AOMSWS",
+            "workspaceId": "9ff817b8-abe1-4bcc-bfb4-48ade0a8f2be",
+            "name": "la--1168252354"
+          }
+        ]
+      },
+      "dataFlows": [
+        {
+          "streams": [
+            "Microsoft-Perf"
+          ],
+          "destinations": [
+            "la--1024707712"
+          ],
+          "transformKql": "source",
+          "outputStream": "Microsoft-Perf"
+        },
+        {
+          "streams": [
+            "Microsoft-Event"
+          ],
+          "destinations": [
+            "la--1024707712"
+          ],
+          "transformKql": "source",
+          "outputStream": "Microsoft-Event"
+        },
+        {
+          "streams": [
+            "Microsoft-W3CIISLog"
+          ],
+          "destinations": [
+            "la--1168252354"
+          ],
+          "transformKql": "source",
+          "outputStream": "Microsoft-W3CIISLog"
+        },
+        {
+          "streams": [
+            "Custom-TransformationTable"
+          ],
+          "destinations": [
+            "la--1024707712"
+          ],
+          "transformKql": "source",
+          "outputStream": "Custom-TransformationTable_CL"
+        }
+      ],
+      "provisioningState": "Succeeded"
+    },
+    "location": "westus2",
+    "kind": "Windows",
+    "id": "/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr",
+    "name": "AMA-skaliki-dcr",
+    "type": "Microsoft.Insights/dataCollectionRules",
+    "etag": "\"040292f7-0000-0800-0000-668f0fac0000\"",
+    "systemData": {
+      "createdBy": "skaliki@microsoft.com",
+      "createdByType": "User",
+      "createdAt": "2022-03-17T00:05:58.6343653Z",
+      "lastModifiedBy": "skaliki@microsoft.com",
+      "lastModifiedByType": "User",
+      "lastModifiedAt": "2024-07-10T22:48:11.4161453Z"
+    }
+  }

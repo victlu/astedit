@@ -1,20 +1,28 @@
 import React from 'react';
 import './App.css';
 
+//GET https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11
+//Authorization: Bearer XXXXXXXX
+
 function App() {
   const [getCount, setCount] = React.useState(0);
   const [getFilter, setFilter] = React.useState();
-  const [getFields, setFields] = React.useState("Windows Events");
+  const [getFields, setFields] = React.useState("blank");
+  const [getDcr, setDcr] = React.useState();
+  const [getDataSource, setDataSource] = React.useState();
+  const [getSelectedDataSource, setSelectedDataSource] = React.useState();
 
   const datasources = {
-    "Performance Counters": [
+    "blank": [
+    ],
+    "performanceCounters": [
       { col: "CounterName", ty: "string", desc: "e.g. \\Process(taskhostw#1)\\Virtual Bytes" },
       { col: "CounterValue", ty: "float" },
       { col: "SampleRate", ty: "int" },
       { col: "Counter", ty: "string", desc: "e.g. Process\\Virtual Bytes" },
       { col: "Instance", ty: "string" },
     ],
-    "Windows Events": [
+    "windowsEventLogs": [
       { col: "PublisherId", ty: "string" },
       { col: "TimeCreated", ty: "datetime" },
       { col: "PublisherName", ty: "string", desc: "e.g. Microsoft-Windows-Security-Auditing" },
@@ -29,11 +37,11 @@ function App() {
       { col: "RenderingInfo", ty: "string" },
       { col: "EventRecordId", ty: "int" },
     ],
-    "Custom Logs": [
+    "customLogs": [
       { col: "FilePath", ty: "string" },
       { col: "RawData", ty: "string" },
     ],
-    "IIS Logs": [
+    "iisLogs": [
       { col: "s_sitename", ty: "string" },
       { col: "s_computername", ty: "string" },
       { col: "s_ip", ty: "string" },
@@ -185,6 +193,47 @@ function App() {
     return filterText
   }
 
+  const ParseDCR = (dcr) =>
+  {
+    let dataSources = dcr.properties.dataSources
+    let extSettings = null
+
+    let ds = {}
+
+    Object.keys(dataSources).forEach((key) => {
+      if (key !== 'extensions')
+      {
+        dataSources[key].forEach(item => {
+          let id = Object.keys(ds).length
+          ds[id] = {
+            id: id,
+            type: key,
+            name: item.name,
+            extSettings: null,
+          }
+        })
+      }
+    })
+
+    dataSources.extensions.forEach((key) => {
+      if (key.extensionName === 'AgentSideTransformExtension')
+      {
+        Object.keys(key.extensionSettings).forEach(itemType => {
+          key.extensionSettings[itemType].forEach(item => {
+            Object.values(ds).forEach(ds1 => {
+              if (ds1.name === item.name && ds1.type === itemType)
+              {
+                ds1.extSettings = item
+              }
+            })
+          })
+        })
+      }
+    })
+
+    return ds
+  }  
+
   // **********************************
 
   let refDownload = React.useRef()
@@ -211,7 +260,10 @@ function App() {
           let reader = new FileReader()
           reader.onload = (e) => {
             let content = e.target.result
-            clickUpdateJson(null, content)
+            let dcr = JSON.parse(content)
+            let ds = ParseDCR(dcr)
+            setDcr(dcr)
+            setDataSource(ds)
           }
 
           setFilter()
@@ -235,26 +287,43 @@ function App() {
     <hr />
   </div>)
 
-  // **********************************
-  // Select DataSouces
+  if (getDataSource)
+  {
+    let items = []
+    Object.values(getDataSource).forEach((item) => {
+      let cs = "badge bg-secondary cursor-clickable mx-1"
+      if (getSelectedDataSource === item.id)
+      {
+        cs = "badge bg-primary cursor-clickable mx-1"
+      }
 
-  let ds = [];
-  Object.keys(datasources).forEach((o) => {
-    ds.push(<option value={o}>{o}</option>)
-  })
+      items.push(<span className={cs}
+        onClick={ (e) => {
+          setSelectedDataSource(item.id);
+          clickUpdateDataSource(e, item.type);
+          let filters = item.extSettings?.agentTransform?.transform?.filters
+          if (filters)
+          {
+            let text = JSON.stringify({
+              filters: filters
+            })
+            console.log("[Text]", text)
+            clickUpdateJson(e, text)
+          }
+        }}
+      >
+        {item.name}
+        {item.extSettings && '*'}
+        <br/>
+        ({item.type})
+      </span>)
+    })
 
-  body.push(<div className="container mb-3">
-    <div className="col">
-      Data Source:
-    </div>
-    <div className="col col-5">
-      <select className="form-select"
-        value={getFields}
-        onChange={e => { clickUpdateDataSource(e, e.target.value)}}>
-        {ds}
-      </select>
-    </div>
-  </div>);
+    body.push(<div>
+      {items}
+      <hr/>
+    </div>)
+  }
 
   // **********************************
 
