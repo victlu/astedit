@@ -11,6 +11,7 @@ function App() {
   const [getDcr, setDcr] = React.useState();
   const [getDataSource, setDataSource] = React.useState();
   const [getSelectedDataSource, setSelectedDataSource] = React.useState();
+  const [getIdentity, setIdentity] = React.useState();
 
   const datasources = {
     "blank": [
@@ -239,6 +240,45 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  const GetDCR1 = () => {
+    let url = 'https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11'
+    fetch(url)
+      .then((response) => {
+        if (!response.ok)
+        {
+          console.log('[Fetch Error]', response.status)
+          return
+        }
+        let json = response.json()
+        console.log('[Fetch Response]', json)
+        return response.json()
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+
+  const GetDCR2 = () => {
+    let url = '/.auth/me'
+    fetch(url)
+      .then((response) => {
+        if (!response.ok)
+        {
+          console.log('[Fetch Error]', response.status)
+          return
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('[Fetch Response]', data)
+        setIdentity(data)
+        return data
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+
   // **********************************
 
   React.useEffect(() => {
@@ -271,6 +311,13 @@ function App() {
     }
   }, [getFilter])
 
+  React.useEffect(() => {
+    if (!getIdentity)
+    {
+      GetDCR2()
+    }
+  }, [getIdentity])
+
   let refDownload = React.useRef()
   let refLoad = React.useRef()
 
@@ -284,10 +331,28 @@ function App() {
 
   // **********************************
 
-  body.push(<div>
-    <a href="/.auth/login/aad" className='mx-2'>Login</a>
-    <a href="/.auth/logout" className='mx-2'>Log out</a>
-  </div>)
+  if (getIdentity?.clientPrincipal?.userDetails)
+  {
+    body.push(<div>
+      <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
+      <a href="/.auth/logout" className='mx-2' onClick={GetDCR2}>Logout</a>
+      <span className='mx-2' onClick={GetDCR2}>check</span>
+    </div>)
+  }
+  else
+  {
+    body.push(<div>
+      <a href="/.auth/login/aad" className='mx-2' onClick={GetDCR2}>Login</a>
+      <span className='mx-2' onClick={GetDCR2}>check</span>
+    </div>)
+  }
+
+  body.push(
+    <div>
+      <span className='mx-2' onClick={GetDCR1}>fetch1</span>
+    </div>
+  )
+
 
   body.push(<div>
     <div className='container'>
@@ -370,7 +435,7 @@ function App() {
   });
 
   let op_elem = [];
-  let ops = ["==", "!=", "<", ">"];
+  let ops = [ "==", "!=", "<", ">", ">=", "<=", "contains" ];
   for (let o of ops) {
     op_elem.push(<option>{o}</option>);
   }
