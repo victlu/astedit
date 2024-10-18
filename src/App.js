@@ -66,22 +66,20 @@ function App() {
   };
 
   const clickAddGroup = (e, i) => {
-    let filter = getFilter;
+    let filter = [ ...getFilter ]
     let obj = [ { field: "new", op: "==", value: "new" } ];
     filter.splice(i+1, 0, obj);
     setFilter(filter);
-    setCount(getCount+1);
   }
 
   const clickRemoveGroup = (e, i) => {
-    let filter = getFilter;
+    let filter = [ ...getFilter ]
     filter.splice(i, 1);
     setFilter(filter);
-    setCount(getCount+1);
   }
 
   const clickRemoveTerm = (e, i, j) => {
-    let filter = getFilter;
+    let filter = [ ...getFilter ]
     if (filter[i].length === 1)
     {
       filter.splice(i, 1);
@@ -91,14 +89,12 @@ function App() {
       filter[i].splice(j, 1);
     }
     setFilter(filter);
-    setCount(getCount+1);
   }
 
   const clickAddTerm = (e, i, j) => {
-    let filter = getFilter;
+    let filter = [ ...getFilter ]
     filter[i].splice(j+1, 0, { field: "new", op: "==", value: "new"});
     setFilter(filter);
-    setCount(getCount+1);
   }
 
   const clickUpdateDataSource = (e, target) => {
@@ -108,7 +104,7 @@ function App() {
   }
 
   const clickUpdateItem = (e, i, j, field, op, val) => {
-    let filter = getFilter;
+    let filter = [ ...getFilter ]
     if (field)
     {
       filter[i][j].field = field;
@@ -122,7 +118,6 @@ function App() {
       filter[i][j].value = val;
     }
     setFilter(filter);
-    setCount(getCount+1);
   }
 
   const clickUpdateJson = (e, jsonText) =>
@@ -141,7 +136,6 @@ function App() {
       });
   
       setFilter(filter);
-      setCount(getCount+1);
     }
     catch
     {
@@ -236,6 +230,40 @@ function App() {
 
   // **********************************
 
+  React.useEffect(() => {
+    console.log('UseEffect')
+    let id = getSelectedDataSource
+    if (id)
+    {
+      let ds = getDataSource[id]
+
+      if (!ds.extSettings)
+      {
+        ds.extSettings = {
+          name: ds.name,
+          streams: [
+            'Custom-XXX'
+          ],
+          agentTransform: {
+            maxBatchTimeoutInSeconds: 60,
+            maxBatchCount: 1000,
+            transform: {}
+          }
+        }
+      }
+
+      if (getFilter)
+      {
+        let filterText = GetFilterJson(getFilter)
+        let filters = JSON.parse(filterText)
+
+        console.log('[ExtSettings]', ds.extSettings.agentTransform.transform.filters, filters.filters)
+
+        ds.extSettings.agentTransform.transform.filters = filters.filters
+      }
+    }
+  }, [getFilter])
+
   let refDownload = React.useRef()
   let refLoad = React.useRef()
 
@@ -307,7 +335,6 @@ function App() {
             let text = JSON.stringify({
               filters: filters
             })
-            console.log("[Text]", text)
             clickUpdateJson(e, text)
           }
         }}
