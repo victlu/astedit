@@ -285,6 +285,11 @@ function App() {
   // **********************************
 
   body.push(<div>
+    <a href="/.auth/login/aad" className='mx-2'>Login</a>
+    <a href="/.auth/logout" className='mx-2'>Log out</a>
+  </div>)
+
+  body.push(<div>
     <div className='container'>
       <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load ...</label>
       <input id='pickfile' ref={refLoad} className='hidden' type='file' onChange={(e) => {

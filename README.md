@@ -68,3 +68,21 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+### steps
+
+sub: Observability_Plat_GenevaAgent_test
+
+az staticwebapp create -n astedit -g astedit-rg --query "defaultHostname"
+npm install -D @azure/static-web-apps-cli
+npx swa init --yes
+npx swa build
+npx swa login --resource-group astedit-swa --app-name astedit-swa   // don't work
+npx swa deploy --env production
+
+astedit-rg / astedit (swa)
+https://agreeable-forest-002f5931e.5.azurestaticapps.net/
+
+
+https://learn.microsoft.com/en-us/azure/static-web-apps/authentication-authorization
