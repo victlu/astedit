@@ -66,34 +66,32 @@ function App() {
   };
 
   const clickAddGroup = (e, i) => {
-    let filter = [ ...getFilter ]
-    let obj = [ { field: "new", op: "==", value: "new" } ];
-    filter.splice(i+1, 0, obj);
+    let filter = [...getFilter]
+    let obj = [{ field: "new", op: "==", value: "new" }];
+    filter.splice(i + 1, 0, obj);
     setFilter(filter);
   }
 
   const clickRemoveGroup = (e, i) => {
-    let filter = [ ...getFilter ]
+    let filter = [...getFilter]
     filter.splice(i, 1);
     setFilter(filter);
   }
 
   const clickRemoveTerm = (e, i, j) => {
-    let filter = [ ...getFilter ]
-    if (filter[i].length === 1)
-    {
+    let filter = [...getFilter]
+    if (filter[i].length === 1) {
       filter.splice(i, 1);
     }
-    else
-    {
+    else {
       filter[i].splice(j, 1);
     }
     setFilter(filter);
   }
 
   const clickAddTerm = (e, i, j) => {
-    let filter = [ ...getFilter ]
-    filter[i].splice(j+1, 0, { field: "new", op: "==", value: "new"});
+    let filter = [...getFilter]
+    filter[i].splice(j + 1, 0, { field: "new", op: "==", value: "new" });
     setFilter(filter);
   }
 
@@ -104,72 +102,60 @@ function App() {
   }
 
   const clickUpdateItem = (e, i, j, field, op, val) => {
-    let filter = [ ...getFilter ]
-    if (field)
-    {
+    let filter = [...getFilter]
+    if (field) {
       filter[i][j].field = field;
     }
-    if (op)
-    {
+    if (op) {
       filter[i][j].op = op;
     }
-    if (val)
-    {
+    if (val) {
       filter[i][j].value = val;
     }
     setFilter(filter);
   }
 
-  const clickUpdateJson = (e, jsonText) =>
-  {
+  const clickUpdateJson = (e, jsonText) => {
     let filter = [];
 
-    try
-    {
+    try {
       let json = JSON.parse(jsonText);
-      json.filters.forEach( o => {
+      json.filters.forEach(o => {
         let terms = [];
-        o.forEach( i => {
+        o.forEach(i => {
           terms.push({ field: i.field, op: i.op, value: i.value });
         });
         filter.push(terms);
       });
-  
+
       setFilter(filter);
     }
-    catch
-    {
+    catch {
       // Ignore
     }
   }
 
-  const clickClipboardPaste = (e) =>
-  {
-    navigator.clipboard.readText().then( jsonText => {
+  const clickClipboardPaste = (e) => {
+    navigator.clipboard.readText().then(jsonText => {
       clickUpdateJson(e, jsonText);
     });
   }
 
   const GetFilterJson = (filter) => {
     let filterText = "";
-    if (filter)
-    {
+    if (filter) {
       let g = 0;
       filterText += "{"
       filterText += "\"filters\":["
-      for (let group of filter)
-      {
-        if (g > 0)
-        {
+      for (let group of filter) {
+        if (g > 0) {
           filterText += ","
         }
         filterText += "["
-  
+
         let t = 0;
-        for (let term of group)
-        {
-          if (t > 0)
-          {
+        for (let term of group) {
+          if (t > 0) {
             filterText += ","
           }
           filterText += "{"
@@ -187,16 +173,14 @@ function App() {
     return filterText
   }
 
-  const ParseDCR = (dcr) =>
-  {
+  const ParseDCR = (dcr) => {
     let dataSources = dcr.properties.dataSources
     let extSettings = null
 
     let ds = {}
 
     Object.keys(dataSources).forEach((key) => {
-      if (key !== 'extensions')
-      {
+      if (key !== 'extensions') {
         dataSources[key].forEach(item => {
           let id = Object.keys(ds).length
           ds[id] = {
@@ -210,13 +194,11 @@ function App() {
     })
 
     dataSources.extensions.forEach((key) => {
-      if (key.extensionName === 'AgentSideTransformExtension')
-      {
+      if (key.extensionName === 'AgentSideTransformExtension') {
         Object.keys(key.extensionSettings).forEach(itemType => {
           key.extensionSettings[itemType].forEach(item => {
             Object.values(ds).forEach(ds1 => {
-              if (ds1.name === item.name && ds1.type === itemType)
-              {
+              if (ds1.name === item.name && ds1.type === itemType) {
                 ds1.extSettings = item
               }
             })
@@ -226,19 +208,44 @@ function App() {
     })
 
     return ds
-  }  
+  }
+
+  const SaveFile = () => {
+    let extSettings = {}
+    Object.values(getDataSource).forEach((item) => {
+      if (item.extSettings.agentTransform.transform.filters.length > 0)
+      {
+        if (!extSettings[item.type]) {
+          extSettings[item.type] = []
+        }
+        extSettings[item.type].push(item.extSettings)
+      }
+    })
+
+    let dcr = getDcr
+    dcr.properties.dataSources.extensions.forEach((item) => {
+      if (item.extensionName === 'AgentSideTransformExtension') {
+        item.extensionSettings = extSettings
+      }
+    })
+
+    let content = JSON.stringify(dcr)
+    let blob = new Blob([content], { type: 'application/json' })
+    let url = URL.createObjectURL(blob)
+    refDownload.current.href = url
+    refDownload.current?.click()
+    refDownload.current.href = '#'
+    URL.revokeObjectURL(url)
+  }
 
   // **********************************
 
   React.useEffect(() => {
-    console.log('UseEffect')
     let id = getSelectedDataSource
-    if (id)
-    {
+    if (id !== null && getDataSource) {
       let ds = getDataSource[id]
 
-      if (!ds.extSettings)
-      {
+      if (!ds.extSettings) {
         ds.extSettings = {
           name: ds.name,
           streams: [
@@ -252,8 +259,7 @@ function App() {
         }
       }
 
-      if (getFilter)
-      {
+      if (getFilter) {
         let filterText = GetFilterJson(getFilter)
         let filters = JSON.parse(filterText)
 
@@ -268,8 +274,7 @@ function App() {
   let refLoad = React.useRef()
 
   let filter = getFilter;
-  if (!filter)
-  {
+  if (!filter) {
     filter = []
     setFilter(filter);
   }
@@ -283,8 +288,7 @@ function App() {
       <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load ...</label>
       <input id='pickfile' ref={refLoad} className='hidden' type='file' onChange={(e) => {
         let file = e.target.files[0]
-        if (file)
-        {
+        if (file) {
           let reader = new FileReader()
           reader.onload = (e) => {
             let content = e.target.result
@@ -298,40 +302,28 @@ function App() {
           reader.readAsText(file)
         }
         refLoad.current.value = null
-      }}/>
+      }} />
 
-      <span className="badge cursor-clickable bg-success mx-2" onClick={() => {
-        let content = GetFilterJson(getFilter)
-        let blob = new Blob([content], { type: 'application/json'})
-        let url = URL.createObjectURL(blob)
-        refDownload.current.href = url
-        refDownload.current?.click()
-        refDownload.current.href = '#'
-        URL.revokeObjectURL(url)
-      }}>Save ...</span>
-
+      <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save ...</span>
       <a href='#' ref={refDownload} className="hidden" download='filter.json'>Save ...</a>
     </div>
     <hr />
   </div>)
 
-  if (getDataSource)
-  {
+  if (getDataSource) {
     let items = []
     Object.values(getDataSource).forEach((item) => {
       let cs = "badge bg-secondary cursor-clickable mx-1"
-      if (getSelectedDataSource === item.id)
-      {
+      if (getSelectedDataSource === item.id) {
         cs = "badge bg-primary cursor-clickable mx-1"
       }
 
       items.push(<span className={cs}
-        onClick={ (e) => {
+        onClick={(e) => {
           setSelectedDataSource(item.id);
           clickUpdateDataSource(e, item.type);
           let filters = item.extSettings?.agentTransform?.transform?.filters
-          if (filters)
-          {
+          if (filters) {
             let text = JSON.stringify({
               filters: filters
             })
@@ -340,15 +332,14 @@ function App() {
         }}
       >
         {item.name}
-        {item.extSettings && '*'}
-        <br/>
+        <br />
         ({item.type})
       </span>)
     })
 
     body.push(<div>
       {items}
-      <hr/>
+      <hr />
     </div>)
   }
 
@@ -366,27 +357,23 @@ function App() {
 
   let op_elem = [];
   let ops = ["==", "!=", "<", ">"];
-  for (let o of ops)
-  {
+  for (let o of ops) {
     op_elem.push(<option>{o}</option>);
   }
 
   // Filter Groups
   let groups = [];
-  for (let i = 0; i < filter.length; i++)
-  {
+  for (let i = 0; i < filter.length; i++) {
     let fields = [];
 
     // Filter Terms
-    for (let j = 0; j < filter[i].length; j++)
-    {
+    for (let j = 0; j < filter[i].length; j++) {
       let rec = filter[i][j];
       let term = [];
 
       let desc = null;
-      if (field_desc[rec.field])
-      {
-        desc= <span>{field_desc[rec.field]}</span>
+      if (field_desc[rec.field]) {
+        desc = <span>{field_desc[rec.field]}</span>
       }
 
       term.push(
@@ -407,23 +394,23 @@ function App() {
           <div className="col col-5">
             <select className="form-select"
               value={rec.field}
-              onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null)}}>
+              onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null) }}>
               {field_elem}
             </select>
           </div>
           <div className="col col-2">
             <select className="form-select"
               value={rec.op}
-              onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null)}}>
+              onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null) }}>
               {op_elem}
             </select>
           </div>
           <div className="col col-5">
             <input
-                className="form-control"
-                value={rec.value}
-                onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value)}}
-                />
+              className="form-control"
+              value={rec.value}
+              onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value) }}
+            />
           </div>
         </div>);
 
@@ -433,17 +420,16 @@ function App() {
           </div>
           <div className="col col-2 mt-2">
             <span className="badge bg-success cursor-clickable mr-1"
-              onClick={ e => { clickAddTerm(e, i, j);}}
-              >+</span>
+              onClick={e => { clickAddTerm(e, i, j); }}
+            >+</span>
             <span className="badge bg-danger cursor-clickable"
-              onClick={ e => { clickRemoveTerm(e, i, j);}}
-              >-</span>
+              onClick={e => { clickRemoveTerm(e, i, j); }}
+            >-</span>
           </div>
         </div>
       )
 
-      if (j > 0)
-      {
+      if (j > 0) {
         fields.push(<div className="row mb-3">
           <div className="col fw-light">
             <span className="badge rounded-pill bg-info">and</span>
@@ -453,7 +439,7 @@ function App() {
 
       fields.push(<div className="container p-2 mb-3 bg-secondary">
         {term}
-        </div>);
+      </div>);
     }
 
     let field_ctrl = [];
@@ -473,8 +459,7 @@ function App() {
         </div>
       </div>);
 
-    if (i > 0)
-    {
+    if (i > 0) {
       groups.push(<div className="container mb-3">
         <div className="row">
           <div className="col text-center fw-light">
@@ -487,28 +472,27 @@ function App() {
     groups.push(<div className="row">
       <div className="row badge bg-secondary mr-1 mb-3 pt-3 pb-3">
         {fields}
-        <hr/>
+        <hr />
         {field_ctrl}
       </div>
-      </div>);
+    </div>);
   }
 
   let footer = [];
 
-  if (filter.length === 0)
-  {
+  if (filter.length === 0) {
     footer.push(
       <div>
-      <span 
-      className="badge bg-success cursor-clickable mr-1"
-      onClick={ e => { clickAddGroup(e, -1);}}
-      >+</span>
+        <span
+          className="badge bg-success cursor-clickable mr-1"
+          onClick={e => { clickAddGroup(e, -1); }}
+        >+</span>
       </div>
     );
   }
 
   body.push(<div className="container">
-    <hr/>
+    <hr />
     Filters:
     {groups}
     {footer}
@@ -520,21 +504,21 @@ function App() {
   let filterText = GetFilterJson(getFilter)
 
   body.push(<div className="container">
-    <hr/>
+    <hr />
     JSON snippet:
     <div className="container">
       <input
         className="form-control"
         value={filterText}
         onChange={e => { clickUpdateJson(e, e.target.value); }}
-        />
+      />
     </div>
     <div className="badge cursor-clickable bg-success mr-1"
-      onClick={ e => {navigator.clipboard.writeText(filterText); alert("Json text copied to clipboard."); }}
-      >Copy to Clipboard</div>
+      onClick={e => { navigator.clipboard.writeText(filterText); alert("Json text copied to clipboard."); }}
+    >Copy to Clipboard</div>
     <div className="badge cursor-clickable bg-success"
       onClick={clickClipboardPaste}
-      >Paste from Clipboard</div>
+    >Paste from Clipboard</div>
   </div>);
 
   return (
