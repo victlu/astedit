@@ -5,7 +5,7 @@ import './App.css';
 //Authorization: Bearer XXXXXXXX
 
 function App() {
-  const [getCount, setCount] = React.useState(0);
+  const [getFilename, setFilename] = React.useState();
   const [getFilter, setFilter] = React.useState();
   const [getFields, setFields] = React.useState("blank");
   const [getDcr, setDcr] = React.useState();
@@ -182,7 +182,7 @@ function App() {
     Object.keys(dataSources).forEach((key) => {
       if (key !== 'extensions') {
         dataSources[key].forEach(item => {
-          let id = Object.keys(ds).length
+          let id = Object.keys(ds).length + 1
           ds[id] = {
             id: id,
             type: key,
@@ -233,6 +233,7 @@ function App() {
     let blob = new Blob([content], { type: 'application/json' })
     let url = URL.createObjectURL(blob)
     refDownload.current.href = url
+    refDownload.current.download = getFilename
     refDownload.current?.click()
     refDownload.current.href = '#'
     URL.revokeObjectURL(url)
@@ -296,22 +297,30 @@ function App() {
             let ds = ParseDCR(dcr)
             setDcr(dcr)
             setDataSource(ds)
+            setSelectedDataSource()
           }
 
           setFilter()
+          setFilename(file.name)
           reader.readAsText(file)
         }
         refLoad.current.value = null
       }} />
 
-      <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save ...</span>
-      <a href='#' ref={refDownload} className="hidden" download='filter.json'>Save ...</a>
+      {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save ...</span>}
+      {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
     </div>
     <hr />
   </div>)
 
   if (getDataSource) {
     let items = []
+
+    if (getFilename)
+    {
+      items.push(<div className="mx-4 mb-2">File: {getFilename}</div>)
+    }
+
     Object.values(getDataSource).forEach((item) => {
       let cs = "badge bg-secondary cursor-clickable mx-1"
       if (getSelectedDataSource === item.id) {
@@ -491,35 +500,14 @@ function App() {
     );
   }
 
-  body.push(<div className="container">
-    <hr />
-    Filters:
-    {groups}
-    {footer}
-  </div>)
-
-  // **********************************
-  // Generate JSON
-
-  let filterText = GetFilterJson(getFilter)
-
-  body.push(<div className="container">
-    <hr />
-    JSON snippet:
-    <div className="container">
-      <input
-        className="form-control"
-        value={filterText}
-        onChange={e => { clickUpdateJson(e, e.target.value); }}
-      />
-    </div>
-    <div className="badge cursor-clickable bg-success mr-1"
-      onClick={e => { navigator.clipboard.writeText(filterText); alert("Json text copied to clipboard."); }}
-    >Copy to Clipboard</div>
-    <div className="badge cursor-clickable bg-success"
-      onClick={clickClipboardPaste}
-    >Paste from Clipboard</div>
-  </div>);
+  if (getSelectedDataSource && getSelectedDataSource >= 0)
+  {
+    body.push(<div className="container">
+      Filters:
+      {groups}
+      {footer}
+    </div>)
+  }
 
   return (
     <div className="App">
