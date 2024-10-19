@@ -41,6 +41,12 @@
   cursor: pointer;
 }
 
+.link {
+  cursor: pointer;
+  color: royalblue;
+  font-weight: 470;
+}
+
 .hidden {
   display: none;
 }

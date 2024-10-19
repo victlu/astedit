@@ -240,7 +240,7 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
-  const GetDCR1 = () => {
+  const Fetch1 = () => {
     let url = 'https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11'
     fetch(url)
       .then((response) => {
@@ -258,7 +258,26 @@ function App() {
       })
   }
 
-  const GetDCR2 = () => {
+  const Fetch2 = () => {
+    let url = 'https://login.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47'
+    fetch(url)
+      .then((response) => {
+        if (!response.ok)
+        {
+          console.log('[Fetch Error]', response.status)
+          return
+        }
+        let json = response.json()
+        console.log('[Fetch Response]', json)
+        return response.json()
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+  
+
+  const FetchAuthMe = () => {
     let url = '/.auth/me'
     fetch(url)
       .then((response) => {
@@ -275,7 +294,7 @@ function App() {
         return data
       })
       .catch(error => {
-        console.error(error)
+        console.error('[Fetch Error]', error)
       })
   }
 
@@ -314,7 +333,7 @@ function App() {
   React.useEffect(() => {
     if (!getIdentity)
     {
-      GetDCR2()
+      FetchAuthMe()
     }
   }, [getIdentity])
 
@@ -335,21 +354,22 @@ function App() {
   {
     body.push(<div>
       <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
-      <a href="/.auth/logout" className='mx-2' onClick={GetDCR2}>Logout</a>
-      <span className='mx-2' onClick={GetDCR2}>check</span>
+      <a href="/.auth/logout" className='mx-2' onClick={FetchAuthMe}>Logout</a>
+      <span className='mx-2' onClick={FetchAuthMe}>check</span>
     </div>)
   }
   else
   {
     body.push(<div>
-      <a href="/.auth/login/aad" className='mx-2' onClick={GetDCR2}>Login</a>
-      <span className='mx-2' onClick={GetDCR2}>check</span>
+      <a href="/.auth/login/aad" className='mx-2' onClick={FetchAuthMe}>Login</a>
+      <span className='mx-2' onClick={FetchAuthMe}>check</span>
     </div>)
   }
 
   body.push(
     <div>
-      <span className='mx-2' onClick={GetDCR1}>fetch1</span>
+      <span className='mx-2' onClick={Fetch1}>fetch1</span>
+      <span className='mx-2' onClick={Fetch2}>fetch2</span>
     </div>
   )
 
@@ -458,13 +478,13 @@ function App() {
       term.push(
         <div className="row">
           <div className="col col-5 text-start fw-light mb-1">
-            Field:
+            Column name
           </div>
           <div className="col col-2 text-start fw-light mb-1">
-            Operation:
+            Operator
           </div>
           <div className="col col-5 text-start fw-light mb-1">
-            Value: [{field_type[rec.field]}] {desc}
+            Column value [{field_type[rec.field]}] {desc}
           </div>
         </div>);
 
@@ -494,67 +514,40 @@ function App() {
         </div>);
 
       term.push(
-        <div className="row">
-          <div className="col-10">
-          </div>
-          <div className="col col-2 mt-2">
-            <span className="badge bg-success cursor-clickable mr-1"
-              onClick={e => { clickAddTerm(e, i, j); }}
-            >+</span>
-            <span className="badge bg-danger cursor-clickable"
-              onClick={e => { clickRemoveTerm(e, i, j); }}
-            >-</span>
-          </div>
+        <div className="mt-1">
+          <span className="link mr-3"
+            onClick={e => { clickAddTerm(e, i, j); }}
+          >Add more columns</span>
+          <span className="link mr-3"
+            onClick={e => { clickRemoveTerm(e, i, j); }}
+          >Remove this column</span>
         </div>
       )
 
-      if (j > 0) {
-        fields.push(<div className="row mb-3">
-          <div className="col fw-light">
-            <span className="badge rounded-pill bg-info">and</span>
-          </div>
-        </div>);
-      }
-
-      fields.push(<div className="container p-2 mb-3 bg-secondary">
+      fields.push(<div className="container p-2">
         {term}
       </div>);
     }
 
-    let field_ctrl = [];
-    field_ctrl.push(
-      <div className="container p-0">
-        <div className="row">
-          <div className="col col-11">
-          </div>
-          <div className="col col-1">
-            <div className="badge bg-success cursor-clickable mr-1"
-              onClick={e => { clickAddGroup(e, i); }}
-            >+</div>
-            <div className="badge bg-danger cursor-clickable"
-              onClick={e => { clickRemoveGroup(e, i); }}
-            >-</div>
-          </div>
-        </div>
-      </div>);
+    // ********************************
 
-    if (i > 0) {
-      groups.push(<div className="container mb-3">
-        <div className="row">
-          <div className="col text-center fw-light">
-            <span className="badge rounded-pill bg-info">or</span>
-          </div>
-        </div>
-      </div>);
-    }
+    groups.push(<div className="mb-2" style={{ fontWeight: 500 }}>
+      Group: Filter if all conditions are true in this group (AND logic)
+    </div>)
 
-    groups.push(<div className="row">
-      <div className="row badge bg-secondary mr-1 mb-3 pt-3 pb-3">
-        {fields}
-        <hr />
-        {field_ctrl}
-      </div>
+    groups.push(<div className="container" style={{ backgroundColor: 'lightgrey' }}>
+      {fields}
     </div>);
+
+    groups.push(
+      <div className="px-3 mt-1 mb-4">
+        <span className="link mr-3"
+          onClick={e => { clickAddGroup(e, i); }}
+        >Add more groups</span>
+        <span className="link"
+          onClick={e => { clickRemoveGroup(e, i); }}
+        >Remove this group</span>
+      </div>);
   }
 
   let footer = [];
@@ -563,9 +556,9 @@ function App() {
     footer.push(
       <div>
         <span
-          className="badge bg-success cursor-clickable mr-1"
+          className="link mr-1"
           onClick={e => { clickAddGroup(e, -1); }}
-        >+</span>
+        >Add more groups</span>
       </div>
     );
   }
@@ -573,7 +566,12 @@ function App() {
   if (getSelectedDataSource && getSelectedDataSource >= 0)
   {
     body.push(<div className="container">
-      Filters:
+      <h3>Filters</h3>
+      <div className="mb-3">
+        Specify the groups below. Please note: among groups, 
+        filter applies to any conditions are true (OR logic).
+        Within groups, filter applies to all conditions are true (AND logic)
+      </div>
       {groups}
       {footer}
     </div>)
