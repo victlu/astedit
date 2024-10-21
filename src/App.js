@@ -13,6 +13,7 @@ function App() {
   const [getDataSource, setDataSource] = React.useState();
   const [getSelectedDataSource, setSelectedDataSource] = React.useState();
   const [getIdentity, setIdentity] = React.useState();
+  const [getTab, setTab] = React.useState();
 
   const clickAddGroup = (e, i) => {
     let filter = [...getFilter]
@@ -127,13 +128,11 @@ function App() {
     let extension = null
 
     dataSources.extensions.forEach(ds => {
-      if (ds.extensionName === 'AgentSideTransformExtension')
-      {
+      if (ds.extensionName === 'AgentSideTransformExtension') {
         extension = ds
       }
     })
-    if (extension === null)
-    {
+    if (extension === null) {
       extension = {
         name: 'AgentSideTransformExtDataSource',
         extensionName: 'AgentSideTransformExtension',
@@ -159,8 +158,7 @@ function App() {
             extSettings: null,
           }
 
-          if (!extension.extensionSettings[key])
-          {
+          if (!extension.extensionSettings[key]) {
             extension.extensionSettings[key] = []
           }
 
@@ -168,14 +166,12 @@ function App() {
 
           // find extensions for this datasource
           extension.extensionSettings[key].forEach(item => {
-            if (dsitem.name === item.name)
-            {
+            if (dsitem.name === item.name) {
               founditem = item
             }
           })
 
-          if (!founditem)
-          {
+          if (!founditem) {
             founditem = {
               name: dsitem.name,
               streams: [
@@ -186,25 +182,32 @@ function App() {
           }
 
           // Normalize all fields
-          if (!founditem.agentTransform)
-          {
+          if (!founditem.agentTransform) {
             founditem.agentTransform = {}
           }
-          if (!founditem.agentTransform.maxBatchTimeoutInSeconds)
-          {
+          if (!founditem.agentTransform.maxBatchTimeoutInSeconds) {
             founditem.agentTransform.maxBatchTimeoutInSeconds = 60
           }
-          if (!founditem.agentTransform.maxBatchCount)
-          {
+          if (!founditem.agentTransform.maxBatchCount) {
             founditem.agentTransform.maxBatchCount = 1000
           }
-          if (!founditem.agentTransform.transform)
-          {
+          if (!founditem.agentTransform.transform) {
             founditem.agentTransform.transform = {}
           }
-          if (!founditem.agentTransform.transform.filters)
-          {
+          if (!founditem.agentTransform.transform.filters) {
             founditem.agentTransform.transform.filters = []
+          }
+          if (!founditem.agentTransform.transform.aggregates) {
+            founditem.agentTransform.transform.aggregates = {}
+          }
+          if (!founditem.agentTransform.transform.aggregates.distinct) {
+            founditem.agentTransform.transform.aggregates.distinct = []
+          }
+          if (!founditem.agentTransform.transform.aggregates.avg) {
+            founditem.agentTransform.transform.aggregates.avg = []
+          }
+          if (!founditem.agentTransform.transform.aggregates.sum) {
+            founditem.agentTransform.transform.aggregates.sum = []
           }
 
           ds[id].extSettings = founditem
@@ -218,8 +221,7 @@ function App() {
   const SaveFile = () => {
     let extSettings = {}
     Object.values(getDataSource).forEach((item) => {
-      if (item.extSettings.agentTransform.transform.filters.length > 0)
-      {
+      if (item.extSettings.agentTransform.transform.filters.length > 0) {
         if (!extSettings[item.type]) {
           extSettings[item.type] = []
         }
@@ -248,8 +250,7 @@ function App() {
     let url = 'https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11'
     fetch(url)
       .then((response) => {
-        if (!response.ok)
-        {
+        if (!response.ok) {
           console.log('[Fetch Error]', response.status)
           return
         }
@@ -266,8 +267,7 @@ function App() {
     let url = 'https://login.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47'
     fetch(url)
       .then((response) => {
-        if (!response.ok)
-        {
+        if (!response.ok) {
           console.log('[Fetch Error]', response.status)
           return
         }
@@ -279,13 +279,12 @@ function App() {
         console.error(error)
       })
   }
-  
+
   const FetchAuthMe = () => {
     let url = '/.auth/me'
     fetch(url)
       .then((response) => {
-        if (!response.ok)
-        {
+        if (!response.ok) {
           console.log('[Fetch Error]', response.status)
           return
         }
@@ -310,11 +309,10 @@ function App() {
 
       if (!ds.extSettings) {
         let table = 'Custom-Unknown'
-        if (getDcr?.properties?.streamDeclarations)
-        {
+        if (getDcr?.properties?.streamDeclarations) {
           table = Object.keys(getDcr?.properties?.streamDeclarations)[0]
         }
-        
+
         ds.extSettings = {
           name: ds.name,
           streams: [
@@ -338,8 +336,7 @@ function App() {
   }, [getFilter])
 
   React.useEffect(() => {
-    if (!getIdentity)
-    {
+    if (!getIdentity) {
       FetchAuthMe()
     }
   }, [getIdentity])
@@ -357,16 +354,14 @@ function App() {
 
   // **********************************
 
-  if (getIdentity?.clientPrincipal?.userDetails)
-  {
+  if (getIdentity?.clientPrincipal?.userDetails) {
     body.push(<div>
       <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
       <a href="/.auth/logout" className='mx-2' onClick={FetchAuthMe}>Logout</a>
       <span className='mx-2' onClick={FetchAuthMe}>check</span>
     </div>)
   }
-  else
-  {
+  else {
     body.push(<div>
       <a href="/.auth/login/aad" className='mx-2' onClick={FetchAuthMe}>Login</a>
       <span className='mx-2' onClick={FetchAuthMe}>check</span>
@@ -413,8 +408,7 @@ function App() {
   if (getDataSource) {
     let items = []
 
-    if (getFilename)
-    {
+    if (getFilename) {
       items.push(<div className="mx-4 mb-2">File: {getFilename}</div>)
     }
 
@@ -462,7 +456,7 @@ function App() {
   });
 
   let op_elem = [];
-  let ops = [ "==", "!=", "<", ">", ">=", "<=", "contains" ];
+  let ops = ["==", "!=", "<", ">", ">=", "<=", "contains"];
   for (let o of ops) {
     op_elem.push(<option>{o}</option>);
   }
@@ -572,18 +566,15 @@ function App() {
 
   let filteroptions = []
 
-  if (getSelectedDataSource && getSelectedDataSource >= 0)
-  {
+  if (getSelectedDataSource && getSelectedDataSource >= 0) {
     let ds = getDataSource[getSelectedDataSource]
 
     let streamitems = []
     Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
-      if (ds.extSettings?.streams[0] === item)
-      {
+      if (ds.extSettings?.streams[0] === item) {
         streamitems.push(<option selected>{item}</option>)
       }
-      else
-      {
+      else {
         streamitems.push(<option>{item}</option>)
       }
     })
@@ -595,7 +586,7 @@ function App() {
           let ds2 = {
             ...getDataSource
           }
-          ds2[getSelectedDataSource].extSettings.streams[0]= e.target.value
+          ds2[getSelectedDataSource].extSettings.streams[0] = e.target.value
           setDataSource(ds2)
         }}>
           {streamitems}
@@ -603,45 +594,153 @@ function App() {
       </div>
       <div className="mb-1">
         <span>maxBatchTimeoutInSeconds: </span>
-        <input type='text' 
-          onChange={(e) => { 
+        <input type='text'
+          onChange={(e) => {
             let ds2 = {
               ...getDataSource
             }
             ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchTimeoutInSeconds = e.target.value
             setDataSource(ds2)
           }}
-          value={ds.extSettings.agentTransform.maxBatchTimeoutInSeconds}/>
+          value={ds.extSettings.agentTransform.maxBatchTimeoutInSeconds} />
       </div>
       <div className="mb-1">
         <span>maxBatchCount: </span>
-        <input type='text' 
-          onChange={(e) => { 
+        <input type='text'
+          onChange={(e) => {
             let ds2 = {
               ...getDataSource
             }
             ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchCount = e.target.value
             setDataSource(ds2)
           }}
-        value={ds.extSettings.agentTransform.maxBatchCount}/>
+          value={ds.extSettings.agentTransform.maxBatchCount} />
       </div>
     </div>)
   }
 
-  if (getSelectedDataSource && getSelectedDataSource >= 0)
-  {
-    body.push(<div className="container">
-      <h3>Filters</h3>
-      <div className="mb-3">
-        {filteroptions}
+  if (getSelectedDataSource && getSelectedDataSource >= 0) {
+    let tab = []
+
+    if (!getTab || getTab === 'filter')
+    {
+      tab.push(<div className='container'>
+        <h4>Options</h4>
+        <div className="mb-3">
+          {filteroptions}
+        </div>
+        <h4>Groups</h4>
+        <div className="mb-3">
+          Specify the groups below. Please note: among groups,
+          filter applies to any conditions are true (OR logic).
+          Within groups, filter applies to all conditions are true (AND logic)
+        </div>
+        {groups}
+        {footer}
+      </div>)
+    }
+
+    if (getTab === 'aggregation')
+    {
+      let fields = []
+
+      const ClickBox = (col, agg) => {
+        let ds2 = {
+          ...getDataSource
+        }
+
+        let found = false
+        let list = []
+        ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg].forEach(item => {
+          if (item === col)
+          {
+            found = true
+          }
+          else
+          {
+            list.push(item)
+          }
+        })
+        if (!found)
+        {
+          list.push(col)
+        }
+        ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg] = list
+
+        setDataSource(ds2)
+      }
+
+      let headerStyle = {
+        fontWeight: 700,
+      }
+
+      fields.push(<div className='row'>
+        <span className='col col-5' style={headerStyle}>Column name</span>
+        <span className='col col-1' style={headerStyle}>Distinct</span>
+        <span className='col col-1' style={headerStyle}>Average</span>
+        <span className='col col-1' style={headerStyle}>Sum</span>
+      </div>)
+
+      let aggs = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.aggregates
+      console.log('[Aggs]', aggs)
+
+      DataSource[getFields].forEach(item => {
+        let distinct = ''
+        let average = ''
+        let sum = ''
+
+        if (item.ty === 'string')
+        {
+          distinct = 'O'
+        }
+        else if (item.ty === 'int')
+        {
+          sum = 'O'
+          average = 'O'
+        }
+
+        aggs.distinct.forEach(col => {
+          if (item.col === col)
+          {
+            distinct = 'X'
+          }
+        })
+          
+        aggs.avg.forEach(col => {
+          if (item.col === col)
+          {
+            average = 'X'
+          }
+        })
+
+        aggs.sum.forEach(col => {
+          if (item.col === col)
+          {
+            sum = 'X'
+          }
+        })
+
+        fields.push(<div className='row'>
+          <span className='col col-5'>{item.col} ({item.ty})</span>
+          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>{distinct}</span>
+          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>{average}</span>
+          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>{sum}</span>
+        </div>)
+      })
+
+      tab.push(<div className='container'>
+        {fields}
+      </div>)
+    }
+
+    body.push(<div>
+      <div className='mb-3'>
+        <h3>
+        <span className={'badge cursor-clickable mx-1 ' + (getTab==='filter'?'bg-primary':'bg-secondary') } onClick={e => { setTab('filter')}}>Filters</span>
+        <span className={'badge cursor-clickable mx-1 ' + (getTab==='aggregation'?'bg-primary':'bg-secondary') }onClick={e => { setTab('aggregation')}}>Aggregations</span>
+        </h3>
       </div>
-      <div className="mb-3">
-        Specify the groups below. Please note: among groups, 
-        filter applies to any conditions are true (OR logic).
-        Within groups, filter applies to all conditions are true (AND logic)
-      </div>
-      {groups}
-      {footer}
+      {tab}
     </div>)
   }
 
