@@ -124,34 +124,90 @@ function App() {
 
   const ParseDCR = (dcr) => {
     let dataSources = dcr.properties.dataSources
-    let extSettings = null
+    let extension = null
+
+    dataSources.extensions.forEach(ds => {
+      if (ds.extensionName === 'AgentSideTransformExtension')
+      {
+        extension = ds
+      }
+    })
+    if (extension === null)
+    {
+      extension = {
+        name: 'AgentSideTransformExtDataSource',
+        extensionName: 'AgentSideTransformExtension',
+        streams: [
+          'Microsoft-OperationLog'
+        ],
+        extensionSettings: {
+        }
+      }
+      dataSources.extensions.push(extension)
+    }
 
     let ds = {}
 
     Object.keys(dataSources).forEach((key) => {
       if (key !== 'extensions') {
-        dataSources[key].forEach(item => {
+        dataSources[key].forEach(dsitem => {
           let id = Object.keys(ds).length + 1
           ds[id] = {
             id: id,
             type: key,
-            name: item.name,
+            name: dsitem.name,
             extSettings: null,
           }
-        })
-      }
-    })
 
-    dataSources.extensions.forEach((key) => {
-      if (key.extensionName === 'AgentSideTransformExtension') {
-        Object.keys(key.extensionSettings).forEach(itemType => {
-          key.extensionSettings[itemType].forEach(item => {
-            Object.values(ds).forEach(ds1 => {
-              if (ds1.name === item.name && ds1.type === itemType) {
-                ds1.extSettings = item
-              }
-            })
+          if (!extension.extensionSettings[key])
+          {
+            extension.extensionSettings[key] = []
+          }
+
+          let founditem = null;
+
+          // find extensions for this datasource
+          extension.extensionSettings[key].forEach(item => {
+            if (dsitem.name === item.name)
+            {
+              founditem = item
+            }
           })
+
+          if (!founditem)
+          {
+            founditem = {
+              name: dsitem.name,
+              streams: [
+                'Custom-XXX'
+              ]
+            }
+            extension.extensionSettings[key].push(founditem)
+          }
+
+          // Normalize all fields
+          if (!founditem.agentTransform)
+          {
+            founditem.agentTransform = {}
+          }
+          if (!founditem.agentTransform.maxBatchTimeoutInSeconds)
+          {
+            founditem.agentTransform.maxBatchTimeoutInSeconds = 60
+          }
+          if (!founditem.agentTransform.maxBatchCount)
+          {
+            founditem.agentTransform.maxBatchCount = 1000
+          }
+          if (!founditem.agentTransform.transform)
+          {
+            founditem.agentTransform.transform = {}
+          }
+          if (!founditem.agentTransform.transform.filters)
+          {
+            founditem.agentTransform.transform.filters = []
+          }
+
+          ds[id].extSettings = founditem
         })
       }
     })
@@ -514,10 +570,71 @@ function App() {
     );
   }
 
+  let filteroptions = []
+
+  if (getSelectedDataSource && getSelectedDataSource >= 0)
+  {
+    let ds = getDataSource[getSelectedDataSource]
+
+    let streamitems = []
+    Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
+      if (ds.extSettings?.streams[0] === item)
+      {
+        streamitems.push(<option selected>{item}</option>)
+      }
+      else
+      {
+        streamitems.push(<option>{item}</option>)
+      }
+    })
+
+    filteroptions.push(<div className="container p-2" style={{ backgroundColor: 'lightgrey' }}>
+      <div className="mb-1">
+        <span>Stream: </span>
+        <select onChange={(e) => {
+          let ds2 = {
+            ...getDataSource
+          }
+          ds2[getSelectedDataSource].extSettings.streams[0]= e.target.value
+          setDataSource(ds2)
+        }}>
+          {streamitems}
+        </select>
+      </div>
+      <div className="mb-1">
+        <span>maxBatchTimeoutInSeconds: </span>
+        <input type='text' 
+          onChange={(e) => { 
+            let ds2 = {
+              ...getDataSource
+            }
+            ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchTimeoutInSeconds = e.target.value
+            setDataSource(ds2)
+          }}
+          value={ds.extSettings.agentTransform.maxBatchTimeoutInSeconds}/>
+      </div>
+      <div className="mb-1">
+        <span>maxBatchCount: </span>
+        <input type='text' 
+          onChange={(e) => { 
+            let ds2 = {
+              ...getDataSource
+            }
+            ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchCount = e.target.value
+            setDataSource(ds2)
+          }}
+        value={ds.extSettings.agentTransform.maxBatchCount}/>
+      </div>
+    </div>)
+  }
+
   if (getSelectedDataSource && getSelectedDataSource >= 0)
   {
     body.push(<div className="container">
       <h3>Filters</h3>
+      <div className="mb-3">
+        {filteroptions}
+      </div>
       <div className="mb-3">
         Specify the groups below. Please note: among groups, 
         filter applies to any conditions are true (OR logic).
@@ -525,28 +642,6 @@ function App() {
       </div>
       {groups}
       {footer}
-    </div>)
-  }
-
-  if (getSelectedDataSource && getSelectedDataSource >= 0)
-  {
-    let ds = getDataSource[getSelectedDataSource]
-    body.push(<div className="container">
-      { ds?.extSettings?.streams[0] &&
-        <div>
-          streams: {ds.extSettings.streams[0]}
-        </div>
-      }
-      { ds?.extSettings?.agentTransform?.maxBatchTimeoutInSeconds &&
-        <div>
-          maxBatchTimeoutInSeconds: {ds.extSettings.agentTransform.maxBatchTimeoutInSeconds}
-        </div>
-      }
-      { ds?.extSettings?.agentTransform?.maxBatchCount &&
-        <div>
-          maxBatchCount: {ds.extSettings.agentTransform.maxBatchCount}
-        </div>
-      }
     </div>)
   }
 

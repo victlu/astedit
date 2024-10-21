@@ -3,7 +3,47 @@
       "immutableId": "dcr-b7cd6e63622741a1b0275cbe3bac0b9e",
       "dataCollectionEndpointId": "/subscriptions/f417f8a9-2d24-4b37-8240-aa00c5a189d3/resourceGroups/victlu-rg/providers/Microsoft.Insights/dataCollectionEndpoints/victlu-dce-arc",
       "streamDeclarations": {
+        "Custom-TransformationTable1": {
+          "columns": [
+            {
+              "name": "TimeGenerated",
+              "type": "datetime"
+            },
+            {
+              "name": "Column1",
+              "type": "datetime"
+            },
+            {
+              "name": "Column2",
+              "type": "string"
+            },
+            {
+              "name": "Column3",
+              "type": "int"
+            }
+          ]
+        },
         "Custom-TransformationTable": {
+          "columns": [
+            {
+              "name": "TimeGenerated",
+              "type": "datetime"
+            },
+            {
+              "name": "Column1",
+              "type": "datetime"
+            },
+            {
+              "name": "Column2",
+              "type": "string"
+            },
+            {
+              "name": "Column3",
+              "type": "int"
+            }
+          ]
+        },
+        "Custom-TransformationTable2": {
           "columns": [
             {
               "name": "TimeGenerated",
