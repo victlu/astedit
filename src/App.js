@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import DataSource from './datasources';
+import { CheckIcon, SquareIcon } from './icons';
 
 //GET https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11
 //Authorization: Bearer XXXXXXXX
@@ -54,16 +55,17 @@ function App() {
   }
 
   const clickUpdateItem = (e, i, j, field, op, val) => {
-    let filter = [...getFilter]
+    let filter = [
+      ...getFilter
+    ]
     if (field) {
       filter[i][j].field = field;
     }
     if (op) {
       filter[i][j].op = op;
     }
-    if (val) {
-      filter[i][j].value = val;
-    }
+    filter[i][j].value = val;
+
     setFilter(filter);
   }
 
@@ -190,10 +192,14 @@ function App() {
           })
 
           if (!founditem) {
+            let table = 'Custom-unknown'
+            if (dcr?.properties?.streamDeclarations) {
+              table = Object.keys(dcr?.properties?.streamDeclarations)[0]
+            }
             founditem = {
               name: dsitem.name,
               streams: [
-                'Custom-XXX'
+                table
               ]
             }
             extension.extensionSettings[key].push(founditem)
@@ -346,7 +352,6 @@ function App() {
 
       if (getFilter) {
         let filterText = GetFilterJson(getFilter)
-        console.log('[FilterText]', filterText)
         let filters = JSON.parse(filterText)
 
         ds.extSettings.agentTransform.transform.filters = filters.filters
@@ -474,12 +479,6 @@ function App() {
     field_desc[o.col] = o.desc;
   });
 
-  let op_elem = [];
-  let ops = ["==", "!=", "<", ">", ">=", "<=", "contains"];
-  for (let o of ops) {
-    op_elem.push(<option>{o}</option>);
-  }
-
   // Filter Groups
   let groups = [];
   for (let i = 0; i < filter.length; i++) {
@@ -495,6 +494,17 @@ function App() {
         desc = <span>{field_desc[rec.field]}</span>
       }
 
+      let op_elem = [];
+      let ops = [ "==", "!=", "<", ">", ">=", "<=" ];
+      for (let o of ops) {
+        op_elem.push(<option>{o}</option>);
+      }
+
+      if (field_type[rec.field] === 'string')
+      {
+        op_elem.push(<option>contains</option>);
+      }
+   
       term.push(
         <div className="row">
           <div className="col col-5 text-start fw-light mb-1">
@@ -644,10 +654,6 @@ function App() {
     if (!getTab || getTab === 'filter')
     {
       tab.push(<div className='container'>
-        <h4>Options</h4>
-        <div className="mb-3">
-          {filteroptions}
-        </div>
         <h4>Groups</h4>
         <div className="mb-3">
           Specify the groups below. Please note: among groups,
@@ -656,6 +662,20 @@ function App() {
         </div>
         {groups}
         {footer}
+      </div>)
+    }
+
+    if (getTab === 'setting')
+    {
+      tab.push(<div className='container'>
+        <h4>Filter Settings</h4>
+        <div className="mb-3">
+          { filter.length === 0 ?
+            <p>Need to setup a filter first.</p>
+          :
+            <>{filteroptions}</>
+          }
+        </div>
       </div>)
     }
 
@@ -694,56 +714,114 @@ function App() {
       }
 
       fields.push(<div className='row'>
-        <span className='col col-5' style={headerStyle}>Column name</span>
+        <span className='col col-4' style={headerStyle}>Column name</span>
+        <span className='col col-1' style={headerStyle}>Type</span>
         <span className='col col-1' style={headerStyle}>Distinct</span>
+        <span className='col col-1' style={headerStyle}>Min</span>
+        <span className='col col-1' style={headerStyle}>Max</span>
         <span className='col col-1' style={headerStyle}>Average</span>
         <span className='col col-1' style={headerStyle}>Sum</span>
       </div>)
 
       let aggs = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.aggregates
+
+      let terms = ['distinct', 'min', 'max', 'avg', 'sum']
+      terms.forEach(term => {
+        if (!aggs[term])
+        {
+          aggs[term] = []
+        }
+      })
+
       console.log('[Aggs]', aggs)
 
       DataSource[getFields].forEach(item => {
-        let distinct = ''
-        let average = ''
-        let sum = ''
+        let distinct = null
+        let min = null
+        let max = null
+        let avg = null
+        let sum = null
 
         if (item.ty === 'string')
         {
-          distinct = 'O'
+          distinct = false
         }
-        else if (item.ty === 'int')
+        else if (item.ty === 'int' || item.ty === 'float')
         {
-          sum = 'O'
-          average = 'O'
+          min = false
+          max = false
+          avg = false
+          sum = false
         }
 
         aggs.distinct.forEach(col => {
           if (item.col === col)
           {
-            distinct = 'X'
+            distinct = true
           }
         })
           
+        aggs.max.forEach(col => {
+          if (item.col === col)
+          {
+            max = true
+          }
+        })
+
+        aggs.min.forEach(col => {
+          if (item.col === col)
+          {
+            min = true
+          }
+        })
+
         aggs.avg.forEach(col => {
           if (item.col === col)
           {
-            average = 'X'
+            avg = true
           }
         })
 
         aggs.sum.forEach(col => {
           if (item.col === col)
           {
-            sum = 'X'
+            sum = true
           }
         })
 
         fields.push(<div className='row'>
-          <span className='col col-5'>{item.col} ({item.ty})</span>
-          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>{distinct}</span>
-          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>{average}</span>
-          <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>{sum}</span>
+          <span className='col col-4'>{item.col}</span>
+          <span className='col col-1'>{item.ty}</span>
+          { distinct !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>
+            { distinct ? CheckIcon() : SquareIcon() }
+            </span>
+            :
+            <span className='col col-1'></span>
+          }
+          { min !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'min')}>
+            { min ? CheckIcon() : SquareIcon() }
+            </span>
+            :
+            <span className='col col-1'></span>
+          }
+          { max !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'max')}>
+            { max ? CheckIcon() : SquareIcon() }
+            </span>
+            :
+            <span className='col col-1'></span>
+          }
+          { avg !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>
+            { avg ? CheckIcon() : SquareIcon() }
+            </span>
+            :
+            <span className='col col-1'></span>
+          }
+          { sum !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>
+            { sum ? CheckIcon() : SquareIcon() }
+            </span>
+            :
+            <span className='col col-1'></span>
+          }
         </div>)
       })
 
@@ -756,6 +834,7 @@ function App() {
       <div className='mb-3'>
         <h3>
         <span className={'badge cursor-clickable mx-1 ' + (getTab==='filter'?'bg-primary':'bg-secondary') } onClick={e => { setTab('filter')}}>Filters</span>
+        <span className={'badge cursor-clickable mx-1 ' + (getTab==='setting'?'bg-primary':'bg-secondary') } onClick={e => { setTab('setting')}}>Filter Settings</span>
         <span className={'badge cursor-clickable mx-1 ' + (getTab==='aggregation'?'bg-primary':'bg-secondary') }onClick={e => { setTab('aggregation')}}>Aggregations</span>
         </h3>
       </div>
