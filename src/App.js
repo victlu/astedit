@@ -17,7 +17,8 @@ function App() {
 
   const clickAddGroup = (e, i) => {
     let filter = [...getFilter]
-    let obj = [{ field: "new", op: "==", value: "new" }];
+    let firstfield = DataSource[getFields][0].col
+    let obj = [{ field: firstfield, op: "==", value: "" }];
     filter.splice(i + 1, 0, obj);
     setFilter(filter);
   }
@@ -41,7 +42,8 @@ function App() {
 
   const clickAddTerm = (e, i, j) => {
     let filter = [...getFilter]
-    filter[i].splice(j + 1, 0, { field: "new", op: "==", value: "new" });
+    let firstfield = DataSource[getFields][0].col
+    filter[i].splice(j + 1, 0, { field: firstfield, op: "==", value: "" });
     setFilter(filter);
   }
 
@@ -93,6 +95,7 @@ function App() {
 
   const GetFilterJson = (filter) => {
     let filterText = "";
+    let fields1 = DataSource[getFields]
     if (filter) {
       let g = 0;
       filterText += "{"
@@ -108,10 +111,25 @@ function App() {
           if (t > 0) {
             filterText += ","
           }
+
+          let ty = null
+          fields1.forEach(o => {
+            if (o.col === term.field)
+            {
+              ty = o.ty
+            }
+          })
+
+          let v = "\"" + term.value + "\""
+          if ((ty === 'int' || ty === 'float') && term.value && term.value.length > 0 && !isNaN(term.value))
+          {
+            v = parseFloat(term.value)
+          }
+          
           filterText += "{"
           filterText += "\"field\":\"" + term.field + "\","
           filterText += "\"op\":\"" + term.op + "\","
-          filterText += "\"value\":\"" + term.value + "\""
+          filterText += "\"value\":" + v
           filterText += "}"
           t++;
         }
@@ -328,6 +346,7 @@ function App() {
 
       if (getFilter) {
         let filterText = GetFilterJson(getFilter)
+        console.log('[FilterText]', filterText)
         let filters = JSON.parse(filterText)
 
         ds.extSettings.agentTransform.transform.filters = filters.filters
