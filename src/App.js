@@ -378,31 +378,32 @@ function App() {
 
   // **********************************
 
-  if (getIdentity?.clientPrincipal?.userDetails) {
-    body.push(<div>
-      <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
-      <a href="/.auth/logout" className='mx-2' onClick={FetchAuthMe}>Logout</a>
-      <span className='mx-2' onClick={FetchAuthMe}>check</span>
-    </div>)
-  }
-  else {
-    body.push(<div>
-      <a href="/.auth/login/aad" className='mx-2' onClick={FetchAuthMe}>Login</a>
-      <span className='mx-2' onClick={FetchAuthMe}>check</span>
-    </div>)
-  }
+  // if (getIdentity?.clientPrincipal?.userDetails) {
+  //   body.push(<div>
+  //     <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
+  //     <a href="/.auth/logout" className='mx-2' onClick={FetchAuthMe}>Logout</a>
+  //     <span className='mx-2' onClick={FetchAuthMe}>check</span>
+  //   </div>)
+  // }
+  // else {
+  //   body.push(<div>
+  //     <a href="/.auth/login/aad" className='mx-2' onClick={FetchAuthMe}>Login</a>
+  //     <span className='mx-2' onClick={FetchAuthMe}>check</span>
+  //   </div>)
+  // }
 
-  body.push(
-    <div>
-      <span className='mx-2' onClick={Fetch1}>fetch1</span>
-      <span className='mx-2' onClick={Fetch2}>fetch2</span>
-    </div>
-  )
+  // body.push(
+  //   <div>
+  //     <span className='mx-2' onClick={Fetch1}>fetch1</span>
+  //     <span className='mx-2' onClick={Fetch2}>fetch2</span>
+  //   </div>
+  // )
 
+  // **********************************
 
   body.push(<div>
     <div className='container'>
-      <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load ...</label>
+      <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load DCR File ...</label>
       <input id='pickfile' ref={refLoad} className='hidden' type='file' onChange={(e) => {
         let file = e.target.files[0]
         if (file) {
@@ -423,8 +424,9 @@ function App() {
         refLoad.current.value = null
       }} />
 
-      {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save ...</span>}
+      {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
+      {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div> }
     </div>
     <hr />
   </div>)
@@ -432,9 +434,7 @@ function App() {
   if (getDataSource) {
     let items = []
 
-    if (getFilename) {
-      items.push(<div className="mx-4 mb-2">File: {getFilename}</div>)
-    }
+    items.push(<div className="mx-4 mb-2"><h6>Available Data Sources</h6></div>)
 
     Object.values(getDataSource).forEach((item) => {
       let cs = "badge bg-secondary cursor-clickable mx-1"
