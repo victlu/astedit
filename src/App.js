@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import DataSource from './datasources';
 import { CheckIcon, SquareIcon } from './icons';
+import { Link } from "react-router-dom";
 
 //GET https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11
 //Authorization: Bearer XXXXXXXX
@@ -13,7 +14,6 @@ function App() {
   const [getDcr, setDcr] = React.useState();
   const [getDataSource, setDataSource] = React.useState();
   const [getSelectedDataSource, setSelectedDataSource] = React.useState();
-  const [getIdentity, setIdentity] = React.useState();
   const [getTab, setTab] = React.useState();
 
   const clickAddGroup = (e, i) => {
@@ -270,60 +270,6 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
-  const Fetch1 = () => {
-    let url = 'https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11'
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
-          return
-        }
-        let json = response.json()
-        console.log('[Fetch Response]', json)
-        return response.json()
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const Fetch2 = () => {
-    let url = 'https://login.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47'
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
-          return
-        }
-        let json = response.json()
-        console.log('[Fetch Response]', json)
-        return response.json()
-      })
-      .catch(error => {
-        console.error(error)
-      })
-  }
-
-  const FetchAuthMe = () => {
-    let url = '/.auth/me'
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
-          return
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('[Fetch Response]', data)
-        setIdentity(data)
-        return data
-      })
-      .catch(error => {
-        console.error('[Fetch Error]', error)
-      })
-  }
-
   // **********************************
 
   React.useEffect(() => {
@@ -359,12 +305,6 @@ function App() {
     }
   }, [getFilter])
 
-  React.useEffect(() => {
-    if (!getIdentity) {
-      FetchAuthMe()
-    }
-  }, [getIdentity])
-
   let refDownload = React.useRef()
   let refLoad = React.useRef()
 
@@ -375,29 +315,6 @@ function App() {
   }
 
   let body = [];
-
-  // **********************************
-
-  // if (getIdentity?.clientPrincipal?.userDetails) {
-  //   body.push(<div>
-  //     <span className='badge bg-info mx-2'>{getIdentity.clientPrincipal.userDetails}</span>
-  //     <a href="/.auth/logout" className='mx-2' onClick={FetchAuthMe}>Logout</a>
-  //     <span className='mx-2' onClick={FetchAuthMe}>check</span>
-  //   </div>)
-  // }
-  // else {
-  //   body.push(<div>
-  //     <a href="/.auth/login/aad" className='mx-2' onClick={FetchAuthMe}>Login</a>
-  //     <span className='mx-2' onClick={FetchAuthMe}>check</span>
-  //   </div>)
-  // }
-
-  // body.push(
-  //   <div>
-  //     <span className='mx-2' onClick={Fetch1}>fetch1</span>
-  //     <span className='mx-2' onClick={Fetch2}>fetch2</span>
-  //   </div>
-  // )
 
   // **********************************
 
@@ -845,7 +762,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Agent-Side Transform: Filter Editor</p>
+        <p>Agent-Side Transform: Filter Editor <Link className='btn' to='/auth'>&nbsp;</Link></p>
       </header>
       <div className="App-body mt-4">
         {body}
