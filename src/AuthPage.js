@@ -1,13 +1,72 @@
 import React from "react";
 import { Link } from "react-router-dom"
+import {
+    useIsAuthenticated, 
+    useMsal, 
+    AuthenticatedTemplate, 
+    UnauthenticatedTemplate
+  } from "@azure/msal-react";
 
 function AuthPage() {
-  const [getIdentity, setIdentity] = React.useState();
   const [getStatus, setStatus] = React.useState();
 
-  const Fetch1 = () => {
-    let url = 'https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11'
-    fetch(url)
+  const { instance, accounts } = useMsal();
+
+  const LogIn = () => {
+    let request = {
+      scopes: [ "User.Read" ]
+    }
+    instance.loginPopup(request)
+      .catch(e => {
+        console.log(e)
+        setStatus(e.message)
+      })
+  }
+
+  const LogOut = () => {
+    let request = {
+      postLogoutRedirectUri: "/",
+      mainWindowRedirectUri: "/",
+    }
+    instance.logoutPopup(request)
+      .catch(e => {
+        console.log(e)
+        setStatus(e.message)
+      })
+  }
+
+  const Fetch1 = (token) => {
+    let sub = 'd67b705f-d9a4-4cee-881a-3bab1c20e567'
+    let rg = 'AMA-skaliki-rg'
+    let dcrname = 'AMA-skaliki-dcr'
+    let url = 'https://management.azure.com/subscriptions/' + sub + 
+      '/resourceGroups/' + rg + 
+      '/providers/Microsoft.Insights/dataCollectionRules/' + dcrname + 
+      '?api-version=2023-03-11'
+
+    let request = {
+      scopes: [ "User.Read" ],
+      account: accounts[0],
+    }
+
+    instance.acquireTokenSilent(request)
+      .then(response => {
+        //console.log('[Token]', response)
+        setStatus('Got Token')
+        return response.accessToken
+      })
+      .then(token => {
+        let headers = new Headers();
+        headers.append('Authorization', 'Bearer ' + token)
+    
+        let options = {
+          method: 'GET',
+          headers: headers,
+        }
+
+        setStatus('Fetching URL')
+        return fetch(url, options)
+      })
       .then((response) => {
         if (!response.ok) {
           console.log('[Fetch Error]', response.status)
@@ -22,75 +81,28 @@ function AuthPage() {
       .catch(error => {
         console.error(error)
         setStatus(error.message)
-      })
-  }
-
-  const Fetch2 = () => {
-    let url = 'https://login.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47'
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
-          setStatus(response.status)
-          return
-        }
-        let json = response.json()
-        console.log('[Fetch Response]', json)
-        setStatus(JSON.stringify(json))
-        return response.json()
-      })
-      .catch(error => {
-        console.error(error)
-        setStatus(error.message)
-      })
-  }
-
-  const FetchAuthMe = () => {
-    let url = '/.auth/me'
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
-          return
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('[Fetch Response]', data)
-        setIdentity(data)
-        return data
-      })
-      .catch(error => {
-        console.error('[Fetch Error]', error)
       })
   }
 
   // **********************************
 
-  React.useEffect(() => {
-    if (!getIdentity) {
-      FetchAuthMe()
-    }
-  }, [getIdentity])
-
   let items = []
 
-  items.push(<div>Auth Page</div>)
-  items.push(<div>Identity: {getIdentity?.clientPrincipal?.userDetails}</div>)
   items.push(<div>
-    <a href='#' onClick={FetchAuthMe}>AuthMe</a>
-  </div>)
-  items.push(<div>
-    <a href="/.auth/login/aad">Login</a>
-  </div>)
-  items.push(<div>
-    <a href="/.auth/logout">Logout</a>
+    <div>Status: {getStatus}</div>
   </div>)
 
-  items.push(<div className='mt-3'>
-    <div>Status: {getStatus}</div>
-    <a href='#' className='me-1' onClick={Fetch1}>fetch1</a>
-    <a href='#' className='me-1' onClick={Fetch2}>fetch2</a>
+  items.push(<div>
+    <UnauthenticatedTemplate>
+      <a href='#' onClick={LogIn}>LogIn</a>
+    </UnauthenticatedTemplate>
+  </div>)
+
+items.push(<div>
+    <AuthenticatedTemplate>
+      <div><a href='#' onClick={Fetch1}>Fetch1</a></div>
+      <div><a href='#' onClick={LogOut}>LogOut</a></div>
+    </AuthenticatedTemplate>
   </div>)
 
   items.push(<div className='mt-3'>

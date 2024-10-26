@@ -86,3 +86,12 @@ https://agreeable-forest-002f5931e.5.azurestaticapps.net/
 
 
 https://learn.microsoft.com/en-us/azure/static-web-apps/authentication-authorization
+
+
+### details
+
+hosted at: https://agreeable-forest-002f5931e.5.azurestaticapps.net
+
+App Name: ama-astedit-swa
+App ID: e509a28b-423c-4131-bce7-027d44a37375
+Tenant ID: 72f988bf-86f1-41af-91ab-2d7cd011db47
