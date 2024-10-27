@@ -28,7 +28,9 @@ function ErrorPage() {
 const msalConfig = {
   auth: {
     clientId: "e509a28b-423c-4131-bce7-027d44a37375",
-    authority: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    //authority: "https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    authority: "https://login.windows.net/72f988bf-86f1-41af-91ab-2d7cd011db47",
+    //authority: "https://login.microsoftonline.com/common/oauth2/authorize",
     redirectUri: "https://agreeable-forest-002f5931e.5.azurestaticapps.net",
   },
   cache: {

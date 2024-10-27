@@ -1,22 +1,26 @@
 import React from "react";
 import { Link } from "react-router-dom"
 import {
-    useIsAuthenticated, 
-    useMsal, 
-    AuthenticatedTemplate, 
-    UnauthenticatedTemplate
-  } from "@azure/msal-react";
+  useIsAuthenticated,
+  useMsal,
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate
+} from "@azure/msal-react";
 
 function AuthPage() {
   const [getStatus, setStatus] = React.useState();
+  const [getAPI, setAPI] = React.useState('User.Read');
 
   const { instance, accounts } = useMsal();
 
   const LogIn = () => {
     let request = {
-      scopes: [ "User.Read" ]
+      scopes: getAPI ? [getAPI] : []
     }
     instance.loginPopup(request)
+      .then(r => {
+        setStatus("Successful Login")
+      })
       .catch(e => {
         console.log(e)
         setStatus(e.message)
@@ -29,6 +33,9 @@ function AuthPage() {
       mainWindowRedirectUri: "/",
     }
     instance.logoutPopup(request)
+      .then(r => {
+        setStatus("Successful Logout")
+      })
       .catch(e => {
         console.log(e)
         setStatus(e.message)
@@ -39,17 +46,17 @@ function AuthPage() {
     let sub = 'd67b705f-d9a4-4cee-881a-3bab1c20e567'
     let rg = 'AMA-skaliki-rg'
     let dcrname = 'AMA-skaliki-dcr'
-    let url = 'https://management.azure.com/subscriptions/' + sub + 
-      '/resourceGroups/' + rg + 
-      '/providers/Microsoft.Insights/dataCollectionRules/' + dcrname + 
+    let url = 'https://management.azure.com/subscriptions/' + sub +
+      '/resourceGroups/' + rg +
+      '/providers/Microsoft.Insights/dataCollectionRules/' + dcrname +
       '?api-version=2023-03-11'
 
     let request = {
-      scopes: [ "User.Read" ],
+      scopes: getAPI ? [getAPI] : [],
       account: accounts[0],
     }
 
-    instance.acquireTokenSilent(request)
+    instance.acquireTokenPopup(request)
       .then(response => {
         //console.log('[Token]', response)
         setStatus('Got Token')
@@ -58,7 +65,7 @@ function AuthPage() {
       .then(token => {
         let headers = new Headers();
         headers.append('Authorization', 'Bearer ' + token)
-    
+
         let options = {
           method: 'GET',
           headers: headers,
@@ -90,6 +97,18 @@ function AuthPage() {
 
   items.push(<div>
     <div>Status: {getStatus}</div>
+    <hr />
+  </div>)
+
+  items.push(<div>
+    <div>API Scope: <input type='text' value={getAPI} onChange={(e) => setAPI(e.target.value)} /></div>
+    <div>
+      <span className='me-2'><a href='#' onClick={() => { setAPI() }}>[Blank]</a></span>
+      <span className='me-2'><a href='#' onClick={() => { setAPI('User.Read') }}>User.Read</a></span>
+      <span className='me-2'><a href='#' onClick={() => { setAPI('.default') }}>.default</a></span>
+      <span className='me-2'><a href='#' onClick={() => { setAPI('user_impersonation') }}>user_impersonation</a></span>
+    </div>
+    <hr />
   </div>)
 
   items.push(<div>
@@ -98,10 +117,11 @@ function AuthPage() {
     </UnauthenticatedTemplate>
   </div>)
 
-items.push(<div>
+  items.push(<div>
     <AuthenticatedTemplate>
-      <div><a href='#' onClick={Fetch1}>Fetch1</a></div>
       <div><a href='#' onClick={LogOut}>LogOut</a></div>
+      <div>&nbsp;</div>
+      <div><a href='#' onClick={Fetch1}>Fetch1</a></div>
     </AuthenticatedTemplate>
   </div>)
 
