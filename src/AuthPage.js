@@ -56,7 +56,7 @@ function AuthPage() {
       account: accounts[0],
     }
 
-    instance.acquireTokenPopup(request)
+    instance.acquireTokenSilent(request)
       .then(response => {
         //console.log('[Token]', response)
         setStatus('Got Token')
@@ -76,7 +76,7 @@ function AuthPage() {
       })
       .then((response) => {
         if (!response.ok) {
-          console.log('[Fetch Error]', response.status)
+          console.log('[Fetch Error]', response)
           setStatus(response.status)
           return
         }
@@ -101,12 +101,12 @@ function AuthPage() {
   </div>)
 
   items.push(<div>
-    <div>API Scope: <input type='text' value={getAPI} onChange={(e) => setAPI(e.target.value)} /></div>
+    <div>API Scope: <input type='text' value={getAPI ? getAPI : '[Blank]' } onChange={(e) => setAPI(e.target.value)} /></div>
     <div>
       <span className='me-2'><a href='#' onClick={() => { setAPI() }}>[Blank]</a></span>
       <span className='me-2'><a href='#' onClick={() => { setAPI('User.Read') }}>User.Read</a></span>
       <span className='me-2'><a href='#' onClick={() => { setAPI('.default') }}>.default</a></span>
-      <span className='me-2'><a href='#' onClick={() => { setAPI('user_impersonation') }}>user_impersonation</a></span>
+      <span className='me-2'><a href='#' onClick={() => { setAPI('https://management.azure.com/user_impersonation') }}>user_impersonation</a></span>
     </div>
     <hr />
   </div>)
