@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import AuthPage from './AuthPage';
+import Auth2Page from './Auth2Page';
 
 import {
   createBrowserRouter,
@@ -75,6 +76,10 @@ const router = createBrowserRouter([
   {
     path: "auth",
     element: <AuthPage />,
+  },
+  {
+    path: "auth2",
+    element: <Auth2Page />,
   },
 ])
 

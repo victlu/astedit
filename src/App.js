@@ -762,7 +762,11 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <p>Agent-Side Transform: Filter Editor <Link className='btn' to='/auth'>&nbsp;</Link></p>
+        <span>
+          <span className="fs-2">Agent-Side Transform: Filter Editor</span>
+          <Link className='btn btn-link fs-6' to='/auth'>1</Link>
+          <Link className='btn btn-link fs-6' to='/auth2'>2</Link>
+        </span>
       </header>
       <div className="App-body mt-4">
         {body}
