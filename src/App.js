@@ -3,6 +3,7 @@ import './App.css';
 import DataSource from './datasources';
 import { CheckIcon, SquareIcon } from './icons';
 import { Link } from "react-router-dom";
+import FetchDCR from './FetchDCR';
 
 //GET https://management.azure.com/subscriptions/d67b705f-d9a4-4cee-881a-3bab1c20e567/resourceGroups/AMA-skaliki-rg/providers/Microsoft.Insights/dataCollectionRules/AMA-skaliki-dcr?api-version=2023-03-11
 //Authorization: Bearer XXXXXXXX
@@ -270,11 +271,21 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  const UpdateDCR = (dcr) => {
+    setFilter()
+    setFilename(dcr.name + ".json")
+
+    let ds = ParseDCR(dcr)
+    setDcr(dcr)
+    setDataSource(ds)
+    setSelectedDataSource()
+  }
+
   // **********************************
 
   React.useEffect(() => {
     let id = getSelectedDataSource
-    if (id !== null && getDataSource) {
+    if (id && id !== null && getDataSource) {
       let ds = getDataSource[id]
 
       if (!ds.extSettings) {
@@ -340,6 +351,8 @@ function App() {
         }
         refLoad.current.value = null
       }} />
+
+      <span><FetchDCR onUpdateDCR={UpdateDCR}/></span>
 
       {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
