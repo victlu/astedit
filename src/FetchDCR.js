@@ -55,7 +55,7 @@ function FetchDCR(props) {
   let dialogs = [];
 
   dialogs.push(
-    <div className="container">
+    <div key={dialogs.length} className="container">
       <div className="row mb-4">
         <span className="col col-2"><b>Resource Id:</b></span>
         <span className="col col-10">
@@ -86,7 +86,7 @@ function FetchDCR(props) {
     </div>);
 
   dialogs.push(
-    <div>
+    <div key={dialogs.length}>
       <hr />
       <div>
         <span className="mx-2"><a href="#" onClick={ () => { setStatus(); setResId(''); setToken(''); }}>clear</a></span>
@@ -96,7 +96,7 @@ function FetchDCR(props) {
     </div>);
 
   items.push(
-    <div id="fetchdcrmodal" className="modal" data-bs-keyboard="false" data-bs-backdrop="static">
+    <div key={items.length} id="fetchdcrmodal" className="modal" data-bs-keyboard="false" data-bs-backdrop="static">
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
@@ -112,9 +112,9 @@ function FetchDCR(props) {
   );
 
   items.push(
-    <span className="badge cursor-clickable bg-success mx-2"
+    <span key={items.length} className="badge cursor-clickable bg-success mx-2"
       data-bs-toggle="modal" data-bs-target="#fetchdcrmodal">
-      Fetch DCR
+      {props.children}
     </span>
   );
 

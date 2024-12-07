@@ -11,6 +11,8 @@ function PostDCR(props) {
 
     let body = JSON.stringify(props.dcr);
 
+    console.log("POSTING:", body);
+
     fetch(url, {
       method: "put",
       headers: {
@@ -42,7 +44,7 @@ function PostDCR(props) {
   let dialogs = [];
 
   dialogs.push(
-    <div>
+    <div key={dialogs.length}>
       <div className="mb-2">Resource ID: {props.resid}</div>
       <div className="">Access Token: <input value={getToken} size={80} onChange={e => { setToken(e.target.value); }} /></div>
       {getStatus && <div className="mt-4 text-danger">{getStatus}</div>}
@@ -50,7 +52,7 @@ function PostDCR(props) {
   )
 
   dialogs.push(
-    <div>
+    <div key={dialogs.length}>
       <hr />
       <div>
         <span className="mx-2"><a href="#" onClick={OnSubmit}>submit</a></span>
@@ -59,7 +61,7 @@ function PostDCR(props) {
 
 
   items.push(
-    <div id="postdcrmodal" className="modal" data-bs-keyboard="false" data-bs-backdrop="static">
+    <div key={items.length} id="postdcrmodal" className="modal" data-bs-keyboard="false" data-bs-backdrop="static">
       <div className="modal-dialog modal-lg">
         <div className="modal-content">
           <div className="modal-header">
@@ -75,9 +77,9 @@ function PostDCR(props) {
   );
 
   items.push(
-    <span className="badge cursor-clickable bg-success mx-2"
+    <span key={items.length} className="badge cursor-clickable bg-success mx-2"
       data-bs-toggle="modal" data-bs-target="#postdcrmodal">
-      Post DCR
+      {props.children}
     </span>
   );
 

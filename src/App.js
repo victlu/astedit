@@ -52,7 +52,7 @@ function App() {
   const clickUpdateDataSource = (e, target) => {
     setFields(target);
     setFilter(null);
-    console.log("clickUpdateDataSource", target);
+    //console.log("clickUpdateDataSource", target);
   }
 
   const clickUpdateItem = (e, i, j, field, op, val) => {
@@ -117,18 +117,16 @@ function App() {
 
           let ty = null
           fields1.forEach(o => {
-            if (o.col === term.field)
-            {
+            if (o.col === term.field) {
               ty = o.ty
             }
           })
 
           let v = "\"" + term.value + "\""
-          if ((ty === 'int' || ty === 'float') && term.value && term.value.length > 0 && !isNaN(term.value))
-          {
+          if ((ty === 'int' || ty === 'float') && term.value && term.value.length > 0 && !isNaN(term.value)) {
             v = parseFloat(term.value)
           }
-          
+
           filterText += "{"
           filterText += "\"field\":\"" + term.field + "\","
           filterText += "\"op\":\"" + term.op + "\","
@@ -144,7 +142,32 @@ function App() {
     return filterText
   }
 
+  const HydrateDCR = (dcr) => {
+    if (!dcr.properties)
+    {
+      dcr.properties = {}
+    }
+
+    // if (!dcr.properties.streamDeclarations)
+    // {
+    //   dcr.properties.streamDeclarations = {
+    //     "Custom-EmptyTable" : {}
+    //   }
+    // }
+
+    if (!dcr.properties.dataSources)
+    {
+      dcr.properties.dataSources = {}
+    }
+
+    if (!dcr.properties.dataSources.extensions) {
+      dcr.properties.dataSources.extensions = []
+    }
+  }
+
   const ParseDCR = (dcr) => {
+    HydrateDCR(dcr);
+
     let dataSources = dcr.properties.dataSources
     let extension = null
 
@@ -193,7 +216,7 @@ function App() {
           })
 
           if (!founditem) {
-            let table = 'Custom-unknown'
+            let table = 'Custom-EmptyTable'
             if (dcr?.properties?.streamDeclarations) {
               table = Object.keys(dcr?.properties?.streamDeclarations)[0]
             }
@@ -243,7 +266,8 @@ function App() {
     return ds
   }
 
-  const SaveFile = () => {
+  const PrepareOutputDcr = () =>
+  {
     let extSettings = {}
     Object.values(getDataSource).forEach((item) => {
       if (item.extSettings.agentTransform.transform.filters.length > 0) {
@@ -260,6 +284,12 @@ function App() {
         item.extensionSettings = extSettings
       }
     })
+
+    return dcr;
+  }
+
+  const SaveFile = () => {
+    let dcr = PrepareOutputDcr()
 
     let content = JSON.stringify(dcr)
     let blob = new Blob([content], { type: 'application/json' })
@@ -331,9 +361,9 @@ function App() {
 
   // **********************************
 
-  body.push(<div>
+  body.push(<div key={body.length}>
     <div className='container'>
-      <label for='pickfile' className="badge cursor-clickable bg-success mx-2">Load DCR File ...</label>
+      <label htmlFor='pickfile' className="badge cursor-clickable bg-success mx-2">Load DCR File ...</label>
       <input id='pickfile' ref={refLoad} className='hidden' type='file' onChange={(e) => {
         let file = e.target.files[0]
         if (file) {
@@ -359,11 +389,11 @@ function App() {
       {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
 
-      <span><FetchDCR onUpdateDCR={UpdateDCR}/></span>
+      <span><FetchDCR onUpdateDCR={UpdateDCR}>Fetch DCR...</FetchDCR></span>
 
-      {getResId && <PostDCR dcr={getDcr} resid={getResId} token={getToken} /> }
+      {getResId && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
 
-      {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div> }
+      {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div>}
     </div>
     <hr />
   </div>)
@@ -371,7 +401,7 @@ function App() {
   if (getDataSource) {
     let items = []
 
-    items.push(<div className="mx-4 mb-2"><h6>Available Data Sources</h6></div>)
+    items.push(<div key={items.length} className="mx-4 mb-2"><h6>Available Data Sources</h6></div>)
 
     Object.values(getDataSource).forEach((item) => {
       let cs = "badge bg-secondary cursor-clickable mx-1"
@@ -379,7 +409,7 @@ function App() {
         cs = "badge bg-primary cursor-clickable mx-1"
       }
 
-      items.push(<span className={cs}
+      items.push(<span key={items.length} className={cs}
         onClick={(e) => {
           setSelectedDataSource(item.id);
           clickUpdateDataSource(e, item.type);
@@ -398,7 +428,7 @@ function App() {
       </span>)
     })
 
-    body.push(<div>
+    body.push(<div key={body.length}>
       {items}
       <hr />
     </div>)
@@ -411,7 +441,7 @@ function App() {
   let field_desc = {};
   let fields1 = DataSource[getFields];
   fields1.forEach((o) => {
-    field_elem.push(<option>{o.col}</option>);
+    field_elem.push(<option key={field_elem.length}>{o.col}</option>);
     field_type[o.col] = o.ty;
     field_desc[o.col] = o.desc;
   });
@@ -432,18 +462,17 @@ function App() {
       }
 
       let op_elem = [];
-      let ops = [ "==", "!=", "<", ">", ">=", "<=" ];
+      let ops = ["==", "!=", "<", ">", ">=", "<="];
       for (let o of ops) {
-        op_elem.push(<option>{o}</option>);
+        op_elem.push(<option key={op_elem.length}>{o}</option>);
       }
 
-      if (field_type[rec.field] === 'string')
-      {
-        op_elem.push(<option>contains</option>);
+      if (field_type[rec.field] === 'string') {
+        op_elem.push(<option key={op_elem.length}>contains</option>);
       }
-   
+
       term.push(
-        <div className="row">
+        <div key={term.length} className="row">
           <div className="col col-5 text-start fw-light mb-1">
             Column name
           </div>
@@ -456,7 +485,7 @@ function App() {
         </div>);
 
       term.push(
-        <div className="row">
+        <div key={term.length} className="row">
           <div className="col col-5">
             <select className="form-select"
               value={rec.field}
@@ -481,7 +510,7 @@ function App() {
         </div>);
 
       term.push(
-        <div className="mt-1">
+        <div key={term.length} className="mt-1">
           <span className="link mr-3"
             onClick={e => { clickAddTerm(e, i, j); }}
           >Add more columns</span>
@@ -491,23 +520,23 @@ function App() {
         </div>
       )
 
-      fields.push(<div className="container p-2">
+      fields.push(<div key={fields.length} className="container p-2">
         {term}
       </div>);
     }
 
     // ********************************
 
-    groups.push(<div className="mb-2" style={{ fontWeight: 500 }}>
+    groups.push(<div key={groups.length} className="mb-2" style={{ fontWeight: 500 }}>
       Group: Filter if all conditions are true in this group (AND logic)
     </div>)
 
-    groups.push(<div className="container" style={{ backgroundColor: 'lightgrey' }}>
+    groups.push(<div key={groups.length} className="container" style={{ backgroundColor: 'lightgrey' }}>
       {fields}
     </div>);
 
     groups.push(
-      <div className="px-3 mt-1 mb-4">
+      <div key={groups.length} className="px-3 mt-1 mb-4">
         <span className="link mr-3"
           onClick={e => { clickAddGroup(e, i); }}
         >Add more groups</span>
@@ -521,7 +550,7 @@ function App() {
 
   if (filter.length === 0) {
     footer.push(
-      <div>
+      <div key={footer.length}>
         <span
           className="link mr-1"
           onClick={e => { clickAddGroup(e, -1); }}
@@ -536,16 +565,23 @@ function App() {
     let ds = getDataSource[getSelectedDataSource]
 
     let streamitems = []
-    Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
-      if (ds.extSettings?.streams[0] === item) {
-        streamitems.push(<option selected>{item}</option>)
-      }
-      else {
-        streamitems.push(<option>{item}</option>)
-      }
-    })
+    if (getDcr.properties.streamDeclarations)
+    {
+      Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
+        if (ds.extSettings?.streams[0] === item) {
+          streamitems.push(<option key={streamitems.length} selected>{item}</option>)
+        }
+        else {
+          streamitems.push(<option key={streamitems.length}>{item}</option>)
+        }
+      })
+    }
+    else
+    {
+      streamitems.push(<option key={streamitems.length} selected>Custom-EmptyTable</option>)
+    }
 
-    filteroptions.push(<div className="container p-2" style={{ backgroundColor: 'lightgrey' }}>
+    filteroptions.push(<div key={filteroptions.length} className="container p-2" style={{ backgroundColor: 'lightgrey' }}>
       <div className="mb-1">
         <span>Stream: </span>
         <select onChange={(e) => {
@@ -588,9 +624,8 @@ function App() {
   if (getSelectedDataSource && getSelectedDataSource >= 0) {
     let tab = []
 
-    if (!getTab || getTab === 'filter')
-    {
-      tab.push(<div className='container'>
+    if (!getTab || getTab === 'filter') {
+      tab.push(<div key={tab.length} className='container'>
         <h4>Groups</h4>
         <div className="mb-3">
           Specify the groups below. Please note: among groups,
@@ -602,22 +637,20 @@ function App() {
       </div>)
     }
 
-    if (getTab === 'setting')
-    {
-      tab.push(<div className='container'>
+    if (getTab === 'setting') {
+      tab.push(<div key={tab.length} className='container'>
         <h4>Filter Settings</h4>
         <div className="mb-3">
-          { filter.length === 0 ?
+          {filter.length === 0 ?
             <p>Need to setup a filter first.</p>
-          :
+            :
             <>{filteroptions}</>
           }
         </div>
       </div>)
     }
 
-    if (getTab === 'aggregation')
-    {
+    if (getTab === 'aggregation') {
       let fields = []
 
       const ClickBox = (col, agg) => {
@@ -628,17 +661,14 @@ function App() {
         let found = false
         let list = []
         ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg].forEach(item => {
-          if (item === col)
-          {
+          if (item === col) {
             found = true
           }
-          else
-          {
+          else {
             list.push(item)
           }
         })
-        if (!found)
-        {
+        if (!found) {
           list.push(col)
         }
         ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg] = list
@@ -650,7 +680,7 @@ function App() {
         fontWeight: 700,
       }
 
-      fields.push(<div className='row'>
+      fields.push(<div key={fields.length} className='row'>
         <span className='col col-4' style={headerStyle}>Column name</span>
         <span className='col col-1' style={headerStyle}>Type</span>
         <span className='col col-1' style={headerStyle}>Distinct</span>
@@ -664,13 +694,12 @@ function App() {
 
       let terms = ['distinct', 'min', 'max', 'avg', 'sum']
       terms.forEach(term => {
-        if (!aggs[term])
-        {
+        if (!aggs[term]) {
           aggs[term] = []
         }
       })
 
-      console.log('[Aggs]', aggs)
+      //console.log('[Aggs]', aggs)
 
       DataSource[getFields].forEach(item => {
         let distinct = null
@@ -679,12 +708,10 @@ function App() {
         let avg = null
         let sum = null
 
-        if (item.ty === 'string')
-        {
+        if (item.ty === 'string') {
           distinct = false
         }
-        else if (item.ty === 'int' || item.ty === 'float')
-        {
+        else if (item.ty === 'int' || item.ty === 'float') {
           min = false
           max = false
           avg = false
@@ -692,87 +719,82 @@ function App() {
         }
 
         aggs.distinct.forEach(col => {
-          if (item.col === col)
-          {
+          if (item.col === col) {
             distinct = true
           }
         })
-          
+
         aggs.max.forEach(col => {
-          if (item.col === col)
-          {
+          if (item.col === col) {
             max = true
           }
         })
 
         aggs.min.forEach(col => {
-          if (item.col === col)
-          {
+          if (item.col === col) {
             min = true
           }
         })
 
         aggs.avg.forEach(col => {
-          if (item.col === col)
-          {
+          if (item.col === col) {
             avg = true
           }
         })
 
         aggs.sum.forEach(col => {
-          if (item.col === col)
-          {
+          if (item.col === col) {
             sum = true
           }
         })
 
-        fields.push(<div className='row'>
+        fields.push(<div key={fields.length} className='row'>
           <span className='col col-4'>{item.col}</span>
           <span className='col col-1'>{item.ty}</span>
-          { distinct !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>
-            { distinct ? CheckIcon() : SquareIcon() }
-            </span>
+          {distinct !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>
+            {distinct ? CheckIcon() : SquareIcon()}
+          </span>
             :
             <span className='col col-1'></span>
           }
-          { min !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'min')}>
-            { min ? CheckIcon() : SquareIcon() }
-            </span>
+          {min !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'min')}>
+            {min ? CheckIcon() : SquareIcon()}
+          </span>
             :
             <span className='col col-1'></span>
           }
-          { max !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'max')}>
-            { max ? CheckIcon() : SquareIcon() }
-            </span>
+          {max !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'max')}>
+            {max ? CheckIcon() : SquareIcon()}
+          </span>
             :
             <span className='col col-1'></span>
           }
-          { avg !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>
-            { avg ? CheckIcon() : SquareIcon() }
-            </span>
+          {avg !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>
+            {avg ? CheckIcon() : SquareIcon()}
+          </span>
             :
             <span className='col col-1'></span>
           }
-          { sum !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>
-            { sum ? CheckIcon() : SquareIcon() }
-            </span>
+          {sum !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>
+            {sum ? CheckIcon() : SquareIcon()}
+          </span>
             :
             <span className='col col-1'></span>
           }
         </div>)
       })
 
-      tab.push(<div className='container'>
+      tab.push(<div key={tab.length} className='container'>
         {fields}
       </div>)
     }
 
-    body.push(<div>
+    body.push(<div key={body.length}>
       <div className='mb-3'>
         <h3>
-        <span className={'badge cursor-clickable mx-1 ' + (getTab==='filter'?'bg-primary':'bg-secondary') } onClick={e => { setTab('filter')}}>Filters</span>
-        <span className={'badge cursor-clickable mx-1 ' + (getTab==='setting'?'bg-primary':'bg-secondary') } onClick={e => { setTab('setting')}}>Filter Settings</span>
-        <span className={'badge cursor-clickable mx-1 ' + (getTab==='aggregation'?'bg-primary':'bg-secondary') }onClick={e => { setTab('aggregation')}}>Aggregations</span>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Filter Settings</span>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
         </h3>
       </div>
       {tab}
