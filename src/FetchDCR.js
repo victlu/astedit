@@ -46,7 +46,7 @@ function FetchDCR(props) {
     console.log("Submit", getDCR);
     if (props.onUpdateDCR)
     {
-      props.onUpdateDCR(getDCR);
+      props.onUpdateDCR(getDCR, getResId, getToken);
     }
     setDCR();
   }
