@@ -16,6 +16,7 @@ function App() {
   const [getTab, setTab] = React.useState();
   const [getResId, setResId] = React.useState();
   const [getToken, setToken] = React.useState();
+  const [getParseFields, setParseFields] = React.useState([]);
 
   const clickAddGroup = (e, i) => {
     let filter = [...getFilter]
@@ -143,8 +144,7 @@ function App() {
   }
 
   const HydrateDCR = (dcr) => {
-    if (!dcr.properties)
-    {
+    if (!dcr.properties) {
       dcr.properties = {}
     }
 
@@ -155,8 +155,7 @@ function App() {
     //   }
     // }
 
-    if (!dcr.properties.dataSources)
-    {
+    if (!dcr.properties.dataSources) {
       dcr.properties.dataSources = {}
     }
 
@@ -266,8 +265,7 @@ function App() {
     return ds
   }
 
-  const PrepareOutputDcr = () =>
-  {
+  const PrepareOutputDcr = () => {
     let extSettings = {}
     Object.values(getDataSource).forEach((item) => {
       if (item.extSettings.agentTransform.transform.filters.length > 0) {
@@ -311,6 +309,34 @@ function App() {
     setToken(token)
     setDataSource(ds)
     setSelectedDataSource()
+  }
+
+  const AddParseField = () => {
+    setParseFields([
+      ...getParseFields,
+      {
+        field: "zzz",
+        name: "custom_" + ("0000" + Math.floor(Math.random()*10000)).slice(-4),
+        parser: "None",
+        parsePath: "",
+      }
+    ])
+  }
+
+  const RemoveParseField = (n) => {
+    let p = getParseFields;
+    p.splice(n, 1);
+    setParseFields([
+      ...p,
+    ]);
+  }
+
+  const UpdateParseField = (n, item) => {
+    let p = getParseFields;
+    p[n] = item;
+    setParseFields([
+      ...p,
+    ]);
   }
 
   // **********************************
@@ -565,8 +591,7 @@ function App() {
     let ds = getDataSource[getSelectedDataSource]
 
     let streamitems = []
-    if (getDcr.properties.streamDeclarations)
-    {
+    if (getDcr.properties.streamDeclarations) {
       Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
         if (ds.extSettings?.streams[0] === item) {
           streamitems.push(<option key={streamitems.length} selected>{item}</option>)
@@ -576,8 +601,7 @@ function App() {
         }
       })
     }
-    else
-    {
+    else {
       streamitems.push(<option key={streamitems.length} selected>Custom-EmptyTable</option>)
     }
 
@@ -789,9 +813,123 @@ function App() {
       </div>)
     }
 
+    if (getTab === 'parse') {
+      let sections = []
+
+      sections.push(
+        <div key={sections.length} className="container">
+          <h4>Parse Fields</h4>
+          <div className="mb-3">
+            Specify an existing data source <b>Field</b> used to extract a new <b>Custom Field</b>.
+            You specify the <b>Parser</b> and <b>Path</b> to use for this operation.
+          </div>
+        </div>
+      );
+
+      sections.push(
+        <div key={groups.length} className="mb-2" style={{ fontWeight: 500 }}>
+          Parse Fields:
+        </div>
+      );
+
+      let field_elem = [];
+      DataSource[getFields].forEach((o) => {
+        field_elem.push(<option key={field_elem.length}>{o.col}</option>);
+      });
+
+      let parse_elem = [];
+      for (let o of ["xml", "json", "regex", "string"]) {
+        parse_elem.push(<option key={parse_elem.length}>{o}</option>);
+      }
+
+      let parse = getParseFields;
+      let n = 0;
+      parse.forEach((item) => {
+        let n1 = n;
+        let curr = item;
+        sections.push(
+          <div key={sections.length} className="container p-2 mb-2" style={{ backgroundColor: 'lightgrey' }}>
+            <div className="row">
+              <div className="col col-3 text-start fw-light mb-1">
+                Field
+              </div>
+              <div className="col col-2 text-start fw-light mb-1">
+                Parser
+              </div>
+              <div className="col col-4 text-start fw-light mb-1">
+                Path
+              </div>
+              <div className="col col-3 text-start fw-light mb-1">
+                Custom Field
+              </div>
+            </div>
+            <div className="row">
+              <div className="col col-3">
+                <select className="form-select" value={item.field}
+                  onChange={(e) => {
+                    curr.field = e.target.value;
+                    UpdateParseField(n1, curr);
+                  }}
+                >
+                  {field_elem}
+                </select>
+              </div>
+
+              <div className="col col-2">
+                <select className="form-select" value={item.parser}
+                  onChange={(e) => {
+                    curr.parser = e.target.value;
+                    UpdateParseField(n1, curr);
+                  }}
+                >
+                  {parse_elem}
+                </select>
+              </div>
+
+              <div className="col col-4">
+                <input className="form-control" type='text'
+                  onChange={(e) => {
+                    curr.parsePath = e.target.value;
+                    UpdateParseField(n1, curr);
+                  }}
+                  value={item.parsePath} />
+              </div>
+
+              <div className="col col-3">
+                <input className="form-control" type='text'
+                  onChange={(e) => {
+                    curr.name = e.target.value;
+                    UpdateParseField(n1, curr);
+                  }}
+                  value={item.name} />
+              </div>
+
+              <div>
+                <span className="link" key={sections.length} onClick={() => { RemoveParseField(n1); }}>
+                  Remove this field
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+        n++;
+      });
+
+      sections.push(
+        <span className="link mr-3"
+          onClick={AddParseField}
+        >Add more fields</span>
+      );
+
+      tab.push(<div key={tab.length} className='container'>
+        {sections}
+      </div>)
+    }
+
     body.push(<div key={body.length}>
       <div className='mb-3'>
         <h3>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'parse' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('parse') }}>Parse</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Filter Settings</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
