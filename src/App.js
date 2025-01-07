@@ -7,6 +7,7 @@ import FetchDCR from './FetchDCR';
 import PostDCR from './PostDCR';
 import ParseTab from './ParseTab';
 import SelectTab from './SelectTab';
+import SettingTab from './SettingTab';
 
 function App() {
   const [getFilename, setFilename] = React.useState();
@@ -557,66 +558,6 @@ function App() {
     );
   }
 
-  let filteroptions = []
-
-  if (getSelectedDataSource && getSelectedDataSource >= 0) {
-    let ds = getDataSource[getSelectedDataSource]
-
-    let streamitems = []
-    if (getDcr.properties.streamDeclarations) {
-      Object.keys(getDcr.properties.streamDeclarations).forEach((item) => {
-        if (ds.extSettings?.streams[0] === item) {
-          streamitems.push(<option key={streamitems.length} selected>{item}</option>)
-        }
-        else {
-          streamitems.push(<option key={streamitems.length}>{item}</option>)
-        }
-      })
-    }
-    else {
-      streamitems.push(<option key={streamitems.length} selected>Custom-EmptyTable</option>)
-    }
-
-    filteroptions.push(<div key={filteroptions.length} className="container p-2" style={{ backgroundColor: 'lightgrey' }}>
-      <div className="mb-1">
-        <span>Stream: </span>
-        <select onChange={(e) => {
-          let ds2 = {
-            ...getDataSource
-          }
-          ds2[getSelectedDataSource].extSettings.streams[0] = e.target.value
-          setDataSource(ds2)
-        }}>
-          {streamitems}
-        </select>
-      </div>
-      <div className="mb-1">
-        <span>maxBatchTimeoutInSeconds: </span>
-        <input type='text'
-          onChange={(e) => {
-            let ds2 = {
-              ...getDataSource
-            }
-            ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchTimeoutInSeconds = e.target.value
-            setDataSource(ds2)
-          }}
-          value={ds.extSettings.agentTransform.maxBatchTimeoutInSeconds} />
-      </div>
-      <div className="mb-1">
-        <span>maxBatchCount: </span>
-        <input type='text'
-          onChange={(e) => {
-            let ds2 = {
-              ...getDataSource
-            }
-            ds2[getSelectedDataSource].extSettings.agentTransform.maxBatchCount = e.target.value
-            setDataSource(ds2)
-          }}
-          value={ds.extSettings.agentTransform.maxBatchCount} />
-      </div>
-    </div>)
-  }
-
   if (getSelectedDataSource && getSelectedDataSource >= 0) {
     let tab = []
 
@@ -634,16 +575,18 @@ function App() {
     }
 
     if (getTab === 'setting') {
-      tab.push(<div key={tab.length} className='container'>
-        <h4>Settings</h4>
-        <div className="mb-3">
-          {filter.length === 0 ?
-            <p>Need to setup a filter first.</p>
-            :
-            <>{filteroptions}</>
-          }
-        </div>
-      </div>)
+      let ds2 = getDataSource[getSelectedDataSource].extSettings;
+      if (!ds2) {
+        ds2= {};
+      }
+      tab.push(
+        <div key={tab.length} className='container'>
+          <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={ (dcr) => {
+            getDataSource[getSelectedDataSource].extSettings = dcr;
+            console.log("[App] DS1", getDataSource[getSelectedDataSource].extSettings)
+            setDataSource({...getDataSource});
+          } }/>
+        </div>);
     }
 
     if (getTab === 'aggregation') {
