@@ -17,6 +17,7 @@ function App() {
   const [getResId, setResId] = React.useState();
   const [getToken, setToken] = React.useState();
   const [getParseFields, setParseFields] = React.useState([]);
+  const [getSelectFields, setSelectFields] = React.useState({});
 
   const clickAddGroup = (e, i) => {
     let filter = [...getFilter]
@@ -311,6 +312,10 @@ function App() {
     setSelectedDataSource()
   }
 
+  const GetParseField = () => {
+    return getParseFields;
+  }
+
   const AddParseField = () => {
     setParseFields([
       ...getParseFields,
@@ -337,6 +342,46 @@ function App() {
     setParseFields([
       ...p,
     ]);
+  }
+
+  const ClickSelectField = (field) => {
+    let p = getSelectFields;
+
+    let f = p[field];
+    if (!f)
+    {
+      p[field] = {
+        select: false,
+        name: "",
+      };
+      f = p[field];
+    }
+
+    p[field].select = p[field].select ? false : true;
+
+    setSelectFields({
+      ...p,
+    });
+  }
+
+  const UpdateSelectField = (field, name) => {
+    let p = getSelectFields;
+
+    let f = p[field];
+    if (!f)
+    {
+      p[field] = {
+        select: false,
+        name: "",
+      };
+      f = p[field];
+    }
+
+    p[field].name = name;
+
+    setSelectFields({
+      ...p,
+    });
   }
 
   // **********************************
@@ -663,7 +708,7 @@ function App() {
 
     if (getTab === 'setting') {
       tab.push(<div key={tab.length} className='container'>
-        <h4>Filter Settings</h4>
+        <h4>Settings</h4>
         <div className="mb-3">
           {filter.length === 0 ?
             <p>Need to setup a filter first.</p>
@@ -827,7 +872,7 @@ function App() {
       );
 
       sections.push(
-        <div key={groups.length} className="mb-2" style={{ fontWeight: 500 }}>
+        <div key={sections.length} className="mb-2" style={{ fontWeight: 500 }}>
           Parse Fields:
         </div>
       );
@@ -842,7 +887,7 @@ function App() {
         parse_elem.push(<option key={parse_elem.length}>{o}</option>);
       }
 
-      let parse = getParseFields;
+      let parse = GetParseField();
       let n = 0;
       parse.forEach((item) => {
         let n1 = n;
@@ -857,7 +902,7 @@ function App() {
                 Parser
               </div>
               <div className="col col-4 text-start fw-light mb-1">
-                Path
+                Parser Specification
               </div>
               <div className="col col-3 text-start fw-light mb-1">
                 Custom Field
@@ -926,13 +971,68 @@ function App() {
       </div>)
     }
 
+    if (getTab === 'select') {
+      let sections = []
+
+      tab.push(
+        <div key={sections.length} className="container">
+          <h4>Field Selection</h4>
+          <div className="mb-3">
+            Select the <b>Field</b> to include.
+          </div>
+        </div>
+      );
+
+      let field_elem = [];
+
+      DataSource[getFields].forEach((o) => {
+        field_elem.push(o.col);
+      });
+
+      getParseFields.forEach((item) => {
+        field_elem.push(item.name);
+      })
+
+      field_elem.forEach((item) => {
+        let distinct = getSelectFields[item]?.select ? true : false;
+        let name = getSelectFields[item]?.name;
+        sections.push(
+          <div key={sections.length} className="row mb-2">
+            <div className="col col-4"><option key={field_elem.length}>{item}</option></div>
+            <div className="col col-1 cursor-clickable" onClick={ () => { ClickSelectField(item); }}>
+              {distinct ? CheckIcon() : SquareIcon()}
+            </div>
+            <div className="col col-5">
+              { distinct &&
+                <input className="form-control" type='text'
+                  onChange={(e) => {
+                    UpdateSelectField(item, e.target.value);
+                  }}
+                  value={name} />
+              }
+            </div>
+          </div>
+        )
+      });
+
+      tab.push(<div key={tab.length} className='container'>
+        <div className="row">
+          <div className="col col-4"><b>Field</b></div>
+          <div className="col col-1"><b>Include</b></div>
+          <div className="col col-5"><b>NameAs</b></div>
+        </div>
+        {sections}
+      </div>)
+    }
+
     body.push(<div key={body.length}>
       <div className='mb-3'>
         <h3>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Settings</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'parse' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('parse') }}>Parse</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Filter Settings</span>
           <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
+          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'select' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('select') }}>Select</span>
         </h3>
       </div>
       {tab}
