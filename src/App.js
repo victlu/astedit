@@ -5,6 +5,8 @@ import { CheckIcon, SquareIcon } from './icons';
 import { Link } from "react-router-dom";
 import FetchDCR from './FetchDCR';
 import PostDCR from './PostDCR';
+import ParseTab from './ParseTab';
+import SelectTab from './SelectTab';
 
 function App() {
   const [getFilename, setFilename] = React.useState();
@@ -16,7 +18,6 @@ function App() {
   const [getTab, setTab] = React.useState();
   const [getResId, setResId] = React.useState();
   const [getToken, setToken] = React.useState();
-  const [getParseFields, setParseFields] = React.useState([]);
   const [getSelectFields, setSelectFields] = React.useState({});
 
   const clickAddGroup = (e, i) => {
@@ -269,12 +270,10 @@ function App() {
   const PrepareOutputDcr = () => {
     let extSettings = {}
     Object.values(getDataSource).forEach((item) => {
-      if (item.extSettings.agentTransform.transform.filters.length > 0) {
-        if (!extSettings[item.type]) {
-          extSettings[item.type] = []
-        }
-        extSettings[item.type].push(item.extSettings)
+      if (!extSettings[item.type]) {
+        extSettings[item.type] = []
       }
+      extSettings[item.type].push(item.extSettings)
     })
 
     let dcr = getDcr
@@ -310,78 +309,6 @@ function App() {
     setToken(token)
     setDataSource(ds)
     setSelectedDataSource()
-  }
-
-  const GetParseField = () => {
-    return getParseFields;
-  }
-
-  const AddParseField = () => {
-    setParseFields([
-      ...getParseFields,
-      {
-        field: "zzz",
-        name: "custom_" + ("0000" + Math.floor(Math.random()*10000)).slice(-4),
-        parser: "None",
-        parsePath: "",
-      }
-    ])
-  }
-
-  const RemoveParseField = (n) => {
-    let p = getParseFields;
-    p.splice(n, 1);
-    setParseFields([
-      ...p,
-    ]);
-  }
-
-  const UpdateParseField = (n, item) => {
-    let p = getParseFields;
-    p[n] = item;
-    setParseFields([
-      ...p,
-    ]);
-  }
-
-  const ClickSelectField = (field) => {
-    let p = getSelectFields;
-
-    let f = p[field];
-    if (!f)
-    {
-      p[field] = {
-        select: false,
-        name: "",
-      };
-      f = p[field];
-    }
-
-    p[field].select = p[field].select ? false : true;
-
-    setSelectFields({
-      ...p,
-    });
-  }
-
-  const UpdateSelectField = (field, name) => {
-    let p = getSelectFields;
-
-    let f = p[field];
-    if (!f)
-    {
-      p[field] = {
-        select: false,
-        name: "",
-      };
-      f = p[field];
-    }
-
-    p[field].name = name;
-
-    setSelectFields({
-      ...p,
-    });
   }
 
   // **********************************
@@ -859,170 +786,33 @@ function App() {
     }
 
     if (getTab === 'parse') {
-      let sections = []
-
-      sections.push(
-        <div key={sections.length} className="container">
-          <h4>Parse Fields</h4>
-          <div className="mb-3">
-            Specify an existing data source <b>Field</b> used to extract a new <b>Custom Field</b>.
-            You specify the <b>Parser</b> and <b>Path</b> to use for this operation.
-          </div>
-        </div>
-      );
-
-      sections.push(
-        <div key={sections.length} className="mb-2" style={{ fontWeight: 500 }}>
-          Parse Fields:
-        </div>
-      );
-
-      let field_elem = [];
-      DataSource[getFields].forEach((o) => {
-        field_elem.push(<option key={field_elem.length}>{o.col}</option>);
-      });
-
-      let parse_elem = [];
-      for (let o of ["xml", "json", "regex", "string"]) {
-        parse_elem.push(<option key={parse_elem.length}>{o}</option>);
+      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform?.parse;
+      if (!ds2) {
+        ds2= {};
       }
-
-      let parse = GetParseField();
-      let n = 0;
-      parse.forEach((item) => {
-        let n1 = n;
-        let curr = item;
-        sections.push(
-          <div key={sections.length} className="container p-2 mb-2" style={{ backgroundColor: 'lightgrey' }}>
-            <div className="row">
-              <div className="col col-3 text-start fw-light mb-1">
-                Field
-              </div>
-              <div className="col col-2 text-start fw-light mb-1">
-                Parser
-              </div>
-              <div className="col col-4 text-start fw-light mb-1">
-                Parser Specification
-              </div>
-              <div className="col col-3 text-start fw-light mb-1">
-                Custom Field
-              </div>
-            </div>
-            <div className="row">
-              <div className="col col-3">
-                <select className="form-select" value={item.field}
-                  onChange={(e) => {
-                    curr.field = e.target.value;
-                    UpdateParseField(n1, curr);
-                  }}
-                >
-                  {field_elem}
-                </select>
-              </div>
-
-              <div className="col col-2">
-                <select className="form-select" value={item.parser}
-                  onChange={(e) => {
-                    curr.parser = e.target.value;
-                    UpdateParseField(n1, curr);
-                  }}
-                >
-                  {parse_elem}
-                </select>
-              </div>
-
-              <div className="col col-4">
-                <input className="form-control" type='text'
-                  onChange={(e) => {
-                    curr.parsePath = e.target.value;
-                    UpdateParseField(n1, curr);
-                  }}
-                  value={item.parsePath} />
-              </div>
-
-              <div className="col col-3">
-                <input className="form-control" type='text'
-                  onChange={(e) => {
-                    curr.name = e.target.value;
-                    UpdateParseField(n1, curr);
-                  }}
-                  value={item.name} />
-              </div>
-
-              <div>
-                <span className="link" key={sections.length} onClick={() => { RemoveParseField(n1); }}>
-                  Remove this field
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-        n++;
-      });
-
-      sections.push(
-        <span className="link mr-3"
-          onClick={AddParseField}
-        >Add more fields</span>
-      );
-
-      tab.push(<div key={tab.length} className='container'>
-        {sections}
-      </div>)
+      tab.push(
+        <div key={tab.length} className='container'>
+          <ParseTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
+            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.parse = dcr;
+            console.log("[App] DS", getDataSource[getSelectedDataSource])
+            setDataSource({...getDataSource});
+          } }/>
+        </div>);
     }
 
     if (getTab === 'select') {
-      let sections = []
-
+      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
+      if (!ds2) {
+        ds2= [];
+      }
       tab.push(
-        <div key={sections.length} className="container">
-          <h4>Field Selection</h4>
-          <div className="mb-3">
-            Select the <b>Field</b> to include.
-          </div>
-        </div>
-      );
-
-      let field_elem = [];
-
-      DataSource[getFields].forEach((o) => {
-        field_elem.push(o.col);
-      });
-
-      getParseFields.forEach((item) => {
-        field_elem.push(item.name);
-      })
-
-      field_elem.forEach((item) => {
-        let distinct = getSelectFields[item]?.select ? true : false;
-        let name = getSelectFields[item]?.name;
-        sections.push(
-          <div key={sections.length} className="row mb-2">
-            <div className="col col-4"><option key={field_elem.length}>{item}</option></div>
-            <div className="col col-1 cursor-clickable" onClick={ () => { ClickSelectField(item); }}>
-              {distinct ? CheckIcon() : SquareIcon()}
-            </div>
-            <div className="col col-5">
-              { distinct &&
-                <input className="form-control" type='text'
-                  onChange={(e) => {
-                    UpdateSelectField(item, e.target.value);
-                  }}
-                  value={name} />
-              }
-            </div>
-          </div>
-        )
-      });
-
-      tab.push(<div key={tab.length} className='container'>
-        <div className="row">
-          <div className="col col-4"><b>Field</b></div>
-          <div className="col col-1"><b>Include</b></div>
-          <div className="col col-5"><b>NameAs</b></div>
-        </div>
-        {sections}
-      </div>)
+        <div key={tab.length} className='container'>
+          <SelectTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
+            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
+            console.log("[App] DS", getDataSource[getSelectedDataSource])
+            setDataSource({...getDataSource});
+          } }/>
+        </div>);
     }
 
     body.push(<div key={body.length}>
