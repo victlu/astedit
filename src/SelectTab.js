@@ -105,8 +105,7 @@ function SelectTab(props) {
       field_elem.push(o.col);
     });
 
-    if (props.Dcr?.parse)
-    {
+    if (props.Dcr?.parse) {
       Object.keys(props.Dcr.parse).forEach(item => {
         field_elem.push(item);
       })
@@ -114,11 +113,31 @@ function SelectTab(props) {
   }
 
   let selectIdx = {};
-  ReadDcrProps().forEach(item => {
+  let selectList = [];
+  let dirty = false;
+  let dcr = ReadDcrProps();
+  dcr.forEach(item => {
+    let found = false;
+    field_elem.forEach(col => {
+      if (col === item.field) {
+        found = true;
+      }
+    });
+
+    if (found) {
+      selectList.push(item);
+    }
+    else {
+      dirty = true;
+    }
+
     selectIdx[item.field] = {
       projectAs: item.projectAs,
     }
   })
+  if (dirty) {
+    SaveDcrProps(selectList);
+  }
 
   let rows = [];
 
