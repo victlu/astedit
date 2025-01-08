@@ -8,6 +8,7 @@ import PostDCR from './PostDCR';
 import ParseTab from './ParseTab';
 import SelectTab from './SelectTab';
 import SettingTab from './SettingTab';
+import AggregationTab from './AggregationTab';
 
 function App() {
   const [getFilename, setFilename] = React.useState();
@@ -561,6 +562,8 @@ function App() {
   if (getSelectedDataSource && getSelectedDataSource >= 0) {
     let tab = []
 
+    console.log("[App] extSettings:", getDataSource[getSelectedDataSource].extSettings)
+
     if (!getTab || getTab === 'filter') {
       tab.push(<div key={tab.length} className='container'>
         <h4>Groups</h4>
@@ -583,149 +586,23 @@ function App() {
         <div key={tab.length} className='container'>
           <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={ (dcr) => {
             getDataSource[getSelectedDataSource].extSettings = dcr;
-            console.log("[App] DS1", getDataSource[getSelectedDataSource].extSettings)
             setDataSource({...getDataSource});
           } }/>
         </div>);
     }
 
     if (getTab === 'aggregation') {
-      let fields = []
-
-      const ClickBox = (col, agg) => {
-        let ds2 = {
-          ...getDataSource
-        }
-
-        let found = false
-        let list = []
-        ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg].forEach(item => {
-          if (item === col) {
-            found = true
-          }
-          else {
-            list.push(item)
-          }
-        })
-        if (!found) {
-          list.push(col)
-        }
-        ds2[getSelectedDataSource].extSettings.agentTransform.transform.aggregates[agg] = list
-
-        setDataSource(ds2)
+      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
+      if (!ds2) {
+        ds2= {};
       }
-
-      let headerStyle = {
-        fontWeight: 700,
-      }
-
-      fields.push(<div key={fields.length} className='row'>
-        <span className='col col-4' style={headerStyle}>Column name</span>
-        <span className='col col-1' style={headerStyle}>Type</span>
-        <span className='col col-1' style={headerStyle}>Distinct</span>
-        <span className='col col-1' style={headerStyle}>Min</span>
-        <span className='col col-1' style={headerStyle}>Max</span>
-        <span className='col col-1' style={headerStyle}>Average</span>
-        <span className='col col-1' style={headerStyle}>Sum</span>
-      </div>)
-
-      let aggs = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.aggregates
-
-      let terms = ['distinct', 'min', 'max', 'avg', 'sum']
-      terms.forEach(term => {
-        if (!aggs[term]) {
-          aggs[term] = []
-        }
-      })
-
-      //console.log('[Aggs]', aggs)
-
-      DataSource[getFields].forEach(item => {
-        let distinct = null
-        let min = null
-        let max = null
-        let avg = null
-        let sum = null
-
-        if (item.ty === 'string') {
-          distinct = false
-        }
-        else if (item.ty === 'int' || item.ty === 'float') {
-          min = false
-          max = false
-          avg = false
-          sum = false
-        }
-
-        aggs.distinct.forEach(col => {
-          if (item.col === col) {
-            distinct = true
-          }
-        })
-
-        aggs.max.forEach(col => {
-          if (item.col === col) {
-            max = true
-          }
-        })
-
-        aggs.min.forEach(col => {
-          if (item.col === col) {
-            min = true
-          }
-        })
-
-        aggs.avg.forEach(col => {
-          if (item.col === col) {
-            avg = true
-          }
-        })
-
-        aggs.sum.forEach(col => {
-          if (item.col === col) {
-            sum = true
-          }
-        })
-
-        fields.push(<div key={fields.length} className='row'>
-          <span className='col col-4'>{item.col}</span>
-          <span className='col col-1'>{item.ty}</span>
-          {distinct !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>
-            {distinct ? CheckIcon() : SquareIcon()}
-          </span>
-            :
-            <span className='col col-1'></span>
-          }
-          {min !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'min')}>
-            {min ? CheckIcon() : SquareIcon()}
-          </span>
-            :
-            <span className='col col-1'></span>
-          }
-          {max !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'max')}>
-            {max ? CheckIcon() : SquareIcon()}
-          </span>
-            :
-            <span className='col col-1'></span>
-          }
-          {avg !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>
-            {avg ? CheckIcon() : SquareIcon()}
-          </span>
-            :
-            <span className='col col-1'></span>
-          }
-          {sum !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>
-            {sum ? CheckIcon() : SquareIcon()}
-          </span>
-            :
-            <span className='col col-1'></span>
-          }
-        </div>)
-      })
-
-      tab.push(<div key={tab.length} className='container'>
-        {fields}
-      </div>)
+      tab.push(
+        <div key={tab.length} className='container'>
+          <AggregationTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
+            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
+            setDataSource({...getDataSource});
+          } }/>
+        </div>);
     }
 
     if (getTab === 'parse') {
@@ -737,7 +614,6 @@ function App() {
         <div key={tab.length} className='container'>
           <ParseTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
             getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.parse = dcr;
-            console.log("[App] DS", getDataSource[getSelectedDataSource])
             setDataSource({...getDataSource});
           } }/>
         </div>);
@@ -752,7 +628,6 @@ function App() {
         <div key={tab.length} className='container'>
           <SelectTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
             getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
-            console.log("[App] DS", getDataSource[getSelectedDataSource])
             setDataSource({...getDataSource});
           } }/>
         </div>);

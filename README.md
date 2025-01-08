@@ -78,7 +78,7 @@ az staticwebapp create -n astedit -g astedit-rg --query "defaultHostname"
 npm install -D @azure/static-web-apps-cli
 npx swa init --yes
 npx swa build
-npx swa login --resource-group astedit-swa --app-name astedit-swa   // don't work
+npx swa login --resource-group astedit-swa --app-name astedit-swa
 npx swa deploy --env production
 
 astedit-rg / astedit (swa)
