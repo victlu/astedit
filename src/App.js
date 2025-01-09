@@ -9,6 +9,7 @@ import ParseTab from './ParseTab';
 import SelectTab from './SelectTab';
 import SettingTab from './SettingTab';
 import AggregationTab from './AggregationTab';
+import FilterTab from './FilterTab';
 
 function App() {
   const [getFilename, setFilename] = React.useState();
@@ -22,57 +23,16 @@ function App() {
   const [getToken, setToken] = React.useState();
   const [getSelectFields, setSelectFields] = React.useState({});
 
-  const clickAddGroup = (e, i) => {
-    let filter = [...getFilter]
-    let firstfield = DataSource[getFields][0].col
-    let obj = [{ field: firstfield, op: "==", value: "" }];
-    filter.splice(i + 1, 0, obj);
-    setFilter(filter);
-  }
-
-  const clickRemoveGroup = (e, i) => {
-    let filter = [...getFilter]
-    filter.splice(i, 1);
-    setFilter(filter);
-  }
-
-  const clickRemoveTerm = (e, i, j) => {
-    let filter = [...getFilter]
-    if (filter[i].length === 1) {
-      filter.splice(i, 1);
-    }
-    else {
-      filter[i].splice(j, 1);
-    }
-    setFilter(filter);
-  }
-
-  const clickAddTerm = (e, i, j) => {
-    let filter = [...getFilter]
-    let firstfield = DataSource[getFields][0].col
-    filter[i].splice(j + 1, 0, { field: firstfield, op: "==", value: "" });
-    setFilter(filter);
-  }
-
   const clickUpdateDataSource = (e, target) => {
     setFields(target);
     setFilter(null);
     //console.log("clickUpdateDataSource", target);
   }
 
-  const clickUpdateItem = (e, i, j, field, op, val) => {
-    let filter = [
-      ...getFilter
-    ]
-    if (field) {
-      filter[i][j].field = field;
-    }
-    if (op) {
-      filter[i][j].op = op;
-    }
-    filter[i][j].value = val;
-
-    setFilter(filter);
+  const clickClipboardPaste = (e) => {
+    navigator.clipboard.readText().then(jsonText => {
+      clickUpdateJson(e, jsonText);
+    });
   }
 
   const clickUpdateJson = (e, jsonText) => {
@@ -93,12 +53,6 @@ function App() {
     catch {
       // Ignore
     }
-  }
-
-  const clickClipboardPaste = (e) => {
-    navigator.clipboard.readText().then(jsonText => {
-      clickUpdateJson(e, jsonText);
-    });
   }
 
   const GetFilterJson = (filter) => {
@@ -147,17 +101,10 @@ function App() {
     return filterText
   }
 
-  const HydrateDCR = (dcr) => {
+  const ParseDCR = (dcr) => {
     if (!dcr.properties) {
       dcr.properties = {}
     }
-
-    // if (!dcr.properties.streamDeclarations)
-    // {
-    //   dcr.properties.streamDeclarations = {
-    //     "Custom-EmptyTable" : {}
-    //   }
-    // }
 
     if (!dcr.properties.dataSources) {
       dcr.properties.dataSources = {}
@@ -166,10 +113,6 @@ function App() {
     if (!dcr.properties.dataSources.extensions) {
       dcr.properties.dataSources.extensions = []
     }
-  }
-
-  const ParseDCR = (dcr) => {
-    HydrateDCR(dcr);
 
     let dataSources = dcr.properties.dataSources
     let extension = null
@@ -205,6 +148,10 @@ function App() {
             extSettings: null,
           }
 
+          if (!extension?.extensionSettings) {
+            extension.extensionSettings = [];
+          }
+
           if (!extension.extensionSettings[key]) {
             extension.extensionSettings[key] = []
           }
@@ -232,7 +179,7 @@ function App() {
             extension.extensionSettings[key].push(founditem)
           }
 
-          // Normalize all fields
+          //Normalize all fields
           if (!founditem.agentTransform) {
             founditem.agentTransform = {}
           }
@@ -251,15 +198,15 @@ function App() {
           if (!founditem.agentTransform.transform.aggregates) {
             founditem.agentTransform.transform.aggregates = {}
           }
-          if (!founditem.agentTransform.transform.aggregates.distinct) {
-            founditem.agentTransform.transform.aggregates.distinct = []
-          }
-          if (!founditem.agentTransform.transform.aggregates.avg) {
-            founditem.agentTransform.transform.aggregates.avg = []
-          }
-          if (!founditem.agentTransform.transform.aggregates.sum) {
-            founditem.agentTransform.transform.aggregates.sum = []
-          }
+          // if (!founditem.agentTransform.transform.aggregates.distinct) {
+          //   founditem.agentTransform.transform.aggregates.distinct = []
+          // }
+          // if (!founditem.agentTransform.transform.aggregates.avg) {
+          //   founditem.agentTransform.transform.aggregates.avg = []
+          // }
+          // if (!founditem.agentTransform.transform.aggregates.sum) {
+          //   founditem.agentTransform.transform.aggregates.sum = []
+          // }
 
           ds[id].extSettings = founditem
         })
@@ -399,9 +346,9 @@ function App() {
   </div>)
 
   if (getDataSource) {
-    let items = []
+    let items = [];
 
-    items.push(<div key={items.length} className="mx-4 mb-2"><h6>Available Data Sources</h6></div>)
+    items.push(<div key={items.length} className="mx-4 mb-2"><h6>Available Data Sources</h6></div>);
 
     Object.values(getDataSource).forEach((item) => {
       let cs = "badge bg-secondary cursor-clickable mx-1"
@@ -422,214 +369,99 @@ function App() {
           }
         }}
       >
-        {item.name}
-        <br />
-        ({item.type})
+        <div><h6>{item.name}</h6></div>
+        <div>({item.type})</div>
       </span>)
-    })
+    });
 
     body.push(<div key={body.length}>
       {items}
       <hr />
-    </div>)
+    </div>);
   }
 
   // **********************************
-
-  let field_elem = [];
-  let field_type = {};
-  let field_desc = {};
-  let fields1 = DataSource[getFields];
-  fields1.forEach((o) => {
-    field_elem.push(<option key={field_elem.length}>{o.col}</option>);
-    field_type[o.col] = o.ty;
-    field_desc[o.col] = o.desc;
-  });
-
-  // Filter Groups
-  let groups = [];
-  for (let i = 0; i < filter.length; i++) {
-    let fields = [];
-
-    // Filter Terms
-    for (let j = 0; j < filter[i].length; j++) {
-      let rec = filter[i][j];
-      let term = [];
-
-      let desc = null;
-      if (field_desc[rec.field]) {
-        desc = <span>{field_desc[rec.field]}</span>
-      }
-
-      let op_elem = [];
-      let ops = ["==", "!=", "<", ">", ">=", "<="];
-      for (let o of ops) {
-        op_elem.push(<option key={op_elem.length}>{o}</option>);
-      }
-
-      if (field_type[rec.field] === 'string') {
-        op_elem.push(<option key={op_elem.length}>contains</option>);
-      }
-
-      term.push(
-        <div key={term.length} className="row">
-          <div className="col col-5 text-start fw-light mb-1">
-            Column name
-          </div>
-          <div className="col col-2 text-start fw-light mb-1">
-            Operator
-          </div>
-          <div className="col col-5 text-start fw-light mb-1">
-            Column value [{field_type[rec.field]}] {desc}
-          </div>
-        </div>);
-
-      term.push(
-        <div key={term.length} className="row">
-          <div className="col col-5">
-            <select className="form-select"
-              value={rec.field}
-              onChange={e => { clickUpdateItem(e, i, j, e.target.value, null, null) }}>
-              {field_elem}
-            </select>
-          </div>
-          <div className="col col-2">
-            <select className="form-select"
-              value={rec.op}
-              onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null) }}>
-              {op_elem}
-            </select>
-          </div>
-          <div className="col col-5">
-            <input
-              className="form-control"
-              value={rec.value}
-              onChange={e => { clickUpdateItem(e, i, j, null, null, e.target.value) }}
-            />
-          </div>
-        </div>);
-
-      term.push(
-        <div key={term.length} className="mt-1">
-          <span className="link mr-3"
-            onClick={e => { clickAddTerm(e, i, j); }}
-          >Add more columns</span>
-          <span className="link mr-3"
-            onClick={e => { clickRemoveTerm(e, i, j); }}
-          >Remove this column</span>
-        </div>
-      )
-
-      fields.push(<div key={fields.length} className="container p-2">
-        {term}
-      </div>);
-    }
-
-    // ********************************
-
-    groups.push(<div key={groups.length} className="mb-2" style={{ fontWeight: 500 }}>
-      Group: Filter if all conditions are true in this group (AND logic)
-    </div>)
-
-    groups.push(<div key={groups.length} className="container" style={{ backgroundColor: 'lightgrey' }}>
-      {fields}
-    </div>);
-
-    groups.push(
-      <div key={groups.length} className="px-3 mt-1 mb-4">
-        <span className="link mr-3"
-          onClick={e => { clickAddGroup(e, i); }}
-        >Add more groups</span>
-        <span className="link"
-          onClick={e => { clickRemoveGroup(e, i); }}
-        >Remove this group</span>
-      </div>);
-  }
-
-  let footer = [];
-
-  if (filter.length === 0) {
-    footer.push(
-      <div key={footer.length}>
-        <span
-          className="link mr-1"
-          onClick={e => { clickAddGroup(e, -1); }}
-        >Add more groups</span>
-      </div>
-    );
-  }
 
   if (getSelectedDataSource && getSelectedDataSource >= 0) {
     let tab = []
 
     console.log("[App] extSettings:", getDataSource[getSelectedDataSource].extSettings)
 
-    if (!getTab || getTab === 'filter') {
+    if (!getTab) {
       tab.push(<div key={tab.length} className='container'>
-        <h4>Groups</h4>
         <div className="mb-3">
-          Specify the groups below. Please note: among groups,
-          filter applies to any conditions are true (OR logic).
-          Within groups, filter applies to all conditions are true (AND logic)
+          Select a Tab above.
         </div>
-        {groups}
-        {footer}
       </div>)
     }
 
     if (getTab === 'setting') {
       let ds2 = getDataSource[getSelectedDataSource].extSettings;
       if (!ds2) {
-        ds2= {};
+        ds2 = {};
       }
       tab.push(
         <div key={tab.length} className='container'>
-          <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={ (dcr) => {
+          <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
             getDataSource[getSelectedDataSource].extSettings = dcr;
-            setDataSource({...getDataSource});
-          } }/>
-        </div>);
-    }
-
-    if (getTab === 'aggregation') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
-      if (!ds2) {
-        ds2= {};
-      }
-      tab.push(
-        <div key={tab.length} className='container'>
-          <AggregationTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
-            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
-            setDataSource({...getDataSource});
-          } }/>
+            setDataSource({ ...getDataSource });
+          }} />
         </div>);
     }
 
     if (getTab === 'parse') {
       let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform?.parse;
       if (!ds2) {
-        ds2= {};
+        ds2 = {};
       }
       tab.push(
         <div key={tab.length} className='container'>
-          <ParseTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
+          <ParseTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
             getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.parse = dcr;
-            setDataSource({...getDataSource});
-          } }/>
+            setDataSource({ ...getDataSource });
+          }} />
+        </div>);
+    }
+
+    if (getTab === 'filter') {
+      let ds2 = getDataSource[getSelectedDataSource].extSettings;
+      if (!ds2) {
+        ds2 = {};
+      }
+      tab.push(
+        <div key={tab.length} className='container'>
+          <FilterTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
+            getDataSource[getSelectedDataSource].extSettings = dcr;
+            setDataSource({ ...getDataSource });
+          }} />
+        </div>);
+    }
+
+    if (getTab === 'aggregation') {
+      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
+      if (!ds2) {
+        ds2 = {};
+      }
+      tab.push(
+        <div key={tab.length} className='container'>
+          <AggregationTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
+            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
+            setDataSource({ ...getDataSource });
+          }} />
         </div>);
     }
 
     if (getTab === 'select') {
       let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
       if (!ds2) {
-        ds2= [];
+        ds2 = [];
       }
       tab.push(
         <div key={tab.length} className='container'>
-          <SelectTab DataSource={DataSource[getFields]} Dcr={ds2} Update={ (dcr) => {
+          <SelectTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
             getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
-            setDataSource({...getDataSource});
-          } }/>
+            setDataSource({ ...getDataSource });
+          }} />
         </div>);
     }
 
