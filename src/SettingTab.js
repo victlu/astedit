@@ -56,7 +56,9 @@ function SettingTab(props) {
   rows.push(<div key={rows.length} className="row mb-2">
     <div className="col col-3">Stream</div>
     <div className="col col-3">
-      <select onChange={(e) => {
+      <select 
+        value={p.streams[0]}
+        onChange={(e) => {
         p.streams = [e.target.value];
         SaveDcrProps(p)
       }}>
@@ -76,7 +78,7 @@ function SettingTab(props) {
           p.agentTransform.maxBatchCount = parseInt(e.target.value);
           SaveDcrProps(p)
         }}
-        value={p.agentTransform?.maxBatchCount ? p.agentTransform.maxBatchCount : 60} />
+        value={p.agentTransform?.maxBatchCount ? p.agentTransform.maxBatchCount : ""} />
     </div>
     <div className="col text-start">
       Maximum # of events per batch.
@@ -91,7 +93,7 @@ function SettingTab(props) {
           p.agentTransform.maxBatchTimeoutInSeconds = parseInt(e.target.value);
           SaveDcrProps(p)
         }}
-        value={p.agentTransform?.maxBatchTimeoutInSeconds ? p.agentTransform.maxBatchTimeoutInSeconds : 1000} />
+        value={p.agentTransform?.maxBatchTimeoutInSeconds ? p.agentTransform.maxBatchTimeoutInSeconds : ""} />
     </div>
     <div className="col text-start">
       Timeout to wait for a complete batch.
