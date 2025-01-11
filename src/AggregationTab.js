@@ -9,6 +9,10 @@ function AggregationTab(props) {
     // scrub out invalids
     let dcr = props.Dcr;
 
+    if (!dcr.aggregates) {
+      dcr.aggregates = {};
+    }
+
     let columns = getColumns();
     TransformGroups.forEach(grp => {
       let list = [];

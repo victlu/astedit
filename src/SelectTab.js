@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { CheckIcon, SquareIcon } from './icons';
+import { CheckIcon, SquareIcon, DiamonExclamation } from './icons';
 
 function SelectTab(props) {
   const ReadDcrProps = () => {
@@ -117,6 +117,8 @@ function SelectTab(props) {
         field_elem.push(item);
       })
     }
+  } else {
+    field_elem.push("ast_count");
   }
 
   let selectIdx = {};
@@ -209,6 +211,36 @@ function SelectTab(props) {
       {rows}
     </div>
   );
+
+  // **********************************
+
+  let errors = [];
+
+  let dup = {};
+  let p = ReadDcrProps();
+  p.forEach(item => {
+    if (dup[item.projectAs])
+    {
+      errors.push(<div className="text-danger"><DiamonExclamation/> Field <b>{item.field}</b> has duplicate <i>Project As</i>.</div>);
+    }
+    dup[item.projectAs] = true;
+  });
+
+  Object.keys(table_fields).forEach(item => {
+    if (!dup[item]) {
+      errors.push(<div className="text-danger"><DiamonExclamation/> <i>Project As</i> is missing <b>{item}</b>.</div>);
+    }
+  });
+
+  if (errors.length > 0) {
+    sections.push(
+      <div className="container p-2 mt-4"
+        style={{ backgroundColor: 'lightgrey' }}
+      >
+        {errors}
+      </div>
+    )
+  }
 
   return sections;
 }
