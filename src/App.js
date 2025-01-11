@@ -452,13 +452,13 @@ function App() {
     }
 
     if (getTab === 'select') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
+      let ds2 = getDataSource[getSelectedDataSource].extSettings;
       if (!ds2) {
         ds2 = [];
       }
       tab.push(
         <div key={tab.length} className='container'>
-          <SelectTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
+          <SelectTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
             getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
             setDataSource({ ...getDataSource });
           }} />

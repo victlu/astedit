@@ -4,7 +4,7 @@ import { CheckIcon, SquareIcon } from './icons';
 
 function SelectTab(props) {
   const ReadDcrProps = () => {
-    let p = props.Dcr?.selectFields;
+    let p = props.Dcr.agentTransform.transform?.selectFields;
     if (!p) {
       p = [];
     }
@@ -67,6 +67,13 @@ function SelectTab(props) {
       </div>
     </div>
   );
+
+  let table_fields = {};
+  let streamSelected = props.Dcr?.streams[0];
+  let streamDecl = props.DcrRoot.properties.streamDeclarations[streamSelected];
+  streamDecl.columns.forEach(item => {
+    table_fields[item.name] = item.type;
+  })
 
   let field_elem = [];
 
@@ -159,6 +166,13 @@ function SelectTab(props) {
       name = curIdx.projectAs;
     }
 
+    let column_options = [];
+    column_options.push(<option selected></option>)
+    Object.keys(table_fields).forEach(item => {
+      let ty = table_fields[item]
+      column_options.push(<option value={item}>{item} ({ty})</option>)
+    })
+
     rows.push(
       <div key={rows.length} className="row mb-2">
         <div className="col col-4"><option key={field_elem.length}>{item}</option></div>
@@ -167,11 +181,23 @@ function SelectTab(props) {
         </div>
         <div className="col col-5">
           {include &&
-            <input className="form-control" type='text'
-              onChange={(e) => {
-                UpdateSelectField(item, e.target.value);
-              }}
-              value={name} />
+            <span style={{ display: 'flex' }}>
+              <input className="form-control" type='text'
+                onChange={(e) => {
+                  UpdateSelectField(item, e.target.value);
+                }}
+                style={{ display: "inline" }}
+                value={name} />
+              <select id='sel' className="form-select"
+                onChange={(e) => {
+                  UpdateSelectField(item, e.target.value);
+                }}
+                style={{ width: "0px" }}
+                value=""
+              >
+                {column_options}
+              </select>
+            </span>
           }
         </div>
       </div>
