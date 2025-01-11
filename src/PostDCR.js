@@ -55,7 +55,7 @@ function PostDCR(props) {
     <div key={dialogs.length}>
       <hr />
       <div>
-        <span className="mx-2"><a href="#" onClick={OnSubmit}>submit</a></span>
+        <span className="mx-2"><span className="badge bg-primary cursor-clickable" onClick={OnSubmit}><h5>Submit</h5></span></span>
       </div>
     </div>);
 
