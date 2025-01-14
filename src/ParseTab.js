@@ -83,8 +83,14 @@ function ParseTab(props) {
     field_elem.push(<option key={field_elem.length}>{o.col}</option>);
   });
 
+  let parser_options = {
+    "XmlParser": "/Event/EventData/Data[@Name='SubjectUserName']",
+    "JsonParser": "$.Employee[2].Name",
+    "RegExParser": "name=(.*);",
+  }
+
   let parse_elem = [];
-  for (let o of ["xml", "json", "regex", "string"]) {
+  for (let o of Object.keys(parser_options)) {
     parse_elem.push(<option key={parse_elem.length}>{o}</option>);
   }
 
@@ -139,6 +145,9 @@ function ParseTab(props) {
                 UpdateParseField(n1, curr);
               }}
               value={item.parserSpecification} />
+              <span className="fw-light" style={{fontSize: '12px'}}>
+                e.g. {parser_options[curr.parser]}
+              </span>
           </div>
 
           <div className="col col-3">
