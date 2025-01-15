@@ -166,15 +166,9 @@ function App() {
           })
 
           if (!founditem) {
-            let table = 'Custom-EmptyTable'
-            if (dcr?.properties?.streamDeclarations) {
-              table = Object.keys(dcr?.properties?.streamDeclarations)[0]
-            }
             founditem = {
               name: dsitem.name,
-              streams: [
-                table
-              ]
+              streams: []
             }
             extension.extensionSettings[key].push(founditem)
           }
@@ -268,16 +262,9 @@ function App() {
       let ds = getDataSource[id]
 
       if (!ds.extSettings) {
-        let table = 'Custom-Unknown'
-        if (getDcr?.properties?.streamDeclarations) {
-          table = Object.keys(getDcr?.properties?.streamDeclarations)[0]
-        }
-
         ds.extSettings = {
           name: ds.name,
-          streams: [
-            table
-          ],
+          streams: [],
           agentTransform: {
             maxBatchTimeoutInSeconds: 60,
             maxBatchCount: 1000,
@@ -345,7 +332,18 @@ function App() {
     <hr />
   </div>)
 
-  if (getDataSource) {
+  let hasStreamDeclarations = false;
+  if (getDcr?.properties?.streamDeclarations && Object.keys(getDcr.properties.streamDeclarations).length > 0) {
+    hasStreamDeclarations = true;
+  }
+
+  if (!hasStreamDeclarations)
+  {
+    body.push(<div className="mb-3">This DCR does not have streamDeclartions defined.</div>)
+    body.push(<div>AST requires Custom-Table to be pre-created and declared in DCR via the streamDeclarations section.</div>)
+  }
+
+  if (hasStreamDeclarations && getDataSource) {
     let items = [];
 
     items.push(<div key={items.length} className="mx-4 mb-2"><h6>Available Data Sources</h6></div>);
