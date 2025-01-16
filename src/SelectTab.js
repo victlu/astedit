@@ -4,17 +4,11 @@ import { CheckIcon, SquareIcon, DiamonExclamation } from './icons';
 
 function SelectTab(props) {
   const ReadDcrProps = () => {
-    let p = props.Dcr.agentTransform.transform?.selectFields;
-    if (!p) {
-      p = [];
-    }
-    return p;
+    return props.Dcr;
   }
 
   const SaveDcrProps = (dcr) => {
-    let p = props.Dcr;
-    p.selectFields = dcr;
-    props.Update(p);
+    props.Update(dcr);
   }
 
   const ClickSelectField = (field) => {
@@ -69,7 +63,10 @@ function SelectTab(props) {
   );
 
   let table_fields = {};
-  let streamSelected = props.Dcr?.streams[0];
+  let streamSelected = props.Dcr?.streams?.[0];
+  if (!streamSelected) {
+    streamSelected = Object.keys(props.DcrRoot.properties.streamDeclarations)[0];
+  }
   let streamDecl = props.DcrRoot.properties.streamDeclarations[streamSelected];
   streamDecl.columns.forEach(item => {
     table_fields[item.name] = item.type;
@@ -77,32 +74,32 @@ function SelectTab(props) {
 
   let field_elem = [];
 
-  if (props.Dcr?.aggregates?.distinct) {
-    props.Dcr.aggregates.distinct.forEach(item => {
+  if (props.AggDcr?.distinct) {
+    props.AggDcr.distinct.forEach(item => {
       field_elem.push("distinct_" + item);
     })
   }
 
-  if (props.Dcr?.aggregates?.avg) {
-    props.Dcr.aggregates.avg.forEach(item => {
+  if (props.AggDcr?.avg) {
+    props.AggDcr.avg.forEach(item => {
       field_elem.push("avg_" + item);
     })
   }
 
-  if (props.Dcr?.aggregates?.min) {
-    props.Dcr.aggregates.min.forEach(item => {
+  if (props.AggDcr?.min) {
+    props.AggDcr.min.forEach(item => {
       field_elem.push("min_" + item);
     })
   }
 
-  if (props.Dcr?.aggregates?.max) {
-    props.Dcr.aggregates.max.forEach(item => {
+  if (props.AggDcr?.max) {
+    props.AggDcr.max.forEach(item => {
       field_elem.push("max_" + item);
     })
   }
 
-  if (props.Dcr?.aggregates?.sum) {
-    props.Dcr.aggregates.sum.forEach(item => {
+  if (props.AggDcr?.sum) {
+    props.AggDcr.sum.forEach(item => {
       field_elem.push("sum_" + item);
     })
   }
@@ -112,8 +109,8 @@ function SelectTab(props) {
       field_elem.push(o.col);
     });
 
-    if (props.Dcr?.parse) {
-      Object.keys(props.Dcr.parse).forEach(item => {
+    if (props.ParseDcr) {
+      Object.keys(props.ParseDcr).forEach(item => {
         field_elem.push(item);
       })
     }
@@ -219,16 +216,15 @@ function SelectTab(props) {
   let dup = {};
   let p = ReadDcrProps();
   p.forEach(item => {
-    if (dup[item.projectAs])
-    {
-      errors.push(<div className="text-danger"><DiamonExclamation/> Field <b>{item.field}</b> has duplicate <i>Project As</i>.</div>);
+    if (dup[item.projectAs]) {
+      errors.push(<div className="text-danger"><DiamonExclamation /> Field <b>{item.field}</b> has duplicate <i>Project As</i>.</div>);
     }
     dup[item.projectAs] = true;
   });
 
   Object.keys(table_fields).forEach(item => {
     if (!dup[item]) {
-      errors.push(<div className="text-danger"><DiamonExclamation/> <i>Project As</i> is missing <b>{item}</b>.</div>);
+      errors.push(<div className="text-danger"><DiamonExclamation /> <i>Project As</i> is missing <b>{item}</b>.</div>);
     }
   });
 

@@ -38,7 +38,7 @@ function ParseTab(props) {
       {
         field: props.DataSource[0].col,
         name: "custom_" + ("0000" + Math.floor(Math.random() * 10000)).slice(-4),
-        parser: "xml",
+        parser: "XmlParser",
         parserSpecification: "",
       }
     ]);

@@ -101,6 +101,28 @@ function App() {
     return filterText
   }
 
+  const getTransformSection = (kind, transform) => {
+    let ret;
+    transform.forEach(t => {
+      if (t.Kind === kind) {
+        ret = t;
+      }
+    });
+    if (!ret) {
+      ret = {
+        Kind: kind,
+      };
+      if (kind === "filters" || kind === "selectFields") {
+        ret[kind] = [];
+      } else {
+        ret[kind] = {};
+      }
+      transform.push(ret);
+      ret = transform[transform.length - 1];
+    }
+    return ret;
+  }
+
   const ParseDCR = (dcr) => {
     if (!dcr.properties) {
       dcr.properties = {}
@@ -184,23 +206,13 @@ function App() {
             founditem.agentTransform.maxBatchCount = 1000
           }
           if (!founditem.agentTransform.transform) {
-            founditem.agentTransform.transform = {}
+            founditem.agentTransform.transform = []
           }
-          if (!founditem.agentTransform.transform.filters) {
-            founditem.agentTransform.transform.filters = []
-          }
-          if (!founditem.agentTransform.transform.aggregates) {
-            founditem.agentTransform.transform.aggregates = {}
-          }
-          // if (!founditem.agentTransform.transform.aggregates.distinct) {
-          //   founditem.agentTransform.transform.aggregates.distinct = []
-          // }
-          // if (!founditem.agentTransform.transform.aggregates.avg) {
-          //   founditem.agentTransform.transform.aggregates.avg = []
-          // }
-          // if (!founditem.agentTransform.transform.aggregates.sum) {
-          //   founditem.agentTransform.transform.aggregates.sum = []
-          // }
+
+          getTransformSection("parse", founditem.agentTransform.transform)
+          getTransformSection("filters", founditem.agentTransform.transform)
+          getTransformSection("aggregates", founditem.agentTransform.transform)
+          getTransformSection("selectFields", founditem.agentTransform.transform)
 
           ds[id].extSettings = founditem
         })
@@ -277,7 +289,7 @@ function App() {
         let filterText = GetFilterJson(getFilter)
         let filters = JSON.parse(filterText)
 
-        ds.extSettings.agentTransform.transform.filters = filters.filters
+        //ds.extSettings.agentTransform.transform.filters = filters.filters
       }
     }
   }, [getFilter])
@@ -320,10 +332,10 @@ function App() {
         refLoad.current.value = null
       }} />
 
+      <span><FetchDCR onUpdateDCR={UpdateDCR}>Fetch DCR...</FetchDCR></span>
+
       {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
-
-      <span><FetchDCR onUpdateDCR={UpdateDCR}>Fetch DCR...</FetchDCR></span>
 
       {getResId && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
 
@@ -337,8 +349,7 @@ function App() {
     hasStreamDeclarations = true;
   }
 
-  if (!hasStreamDeclarations)
-  {
+  if (!hasStreamDeclarations && getDataSource) {
     body.push(<div className="mb-3">This DCR does not have streamDeclartions defined.</div>)
     body.push(<div>AST requires Custom-Table to be pre-created and declared in DCR via the streamDeclarations section.</div>)
   }
@@ -408,58 +419,69 @@ function App() {
     }
 
     if (getTab === 'parse') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform?.parse;
-      if (!ds2) {
-        ds2 = {};
-      }
+      let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
       tab.push(
         <div key={tab.length} className='container'>
-          <ParseTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
-            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform.parse = dcr;
-            setDataSource({ ...getDataSource });
-          }} />
+          <ParseTab DataSource={DataSource[getFields]}
+            Dcr={ds2.parse}
+            Update={(dcr) => {
+              let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+              ds2.parse = dcr;
+              setDataSource({ ...getDataSource });
+            }} />
         </div>);
     }
 
     if (getTab === 'filter') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings;
-      if (!ds2) {
-        ds2 = {};
-      }
+      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+      let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
       tab.push(
         <div key={tab.length} className='container'>
-          <FilterTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
-            getDataSource[getSelectedDataSource].extSettings = dcr;
-            setDataSource({ ...getDataSource });
-          }} />
+          <FilterTab DataSource={DataSource[getFields]}
+            DcrRoot={getDcr}
+            ParseDcr={parseDcr.parse}
+            Dcr={ds2.filters}
+            Update={(dcr) => {
+              let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+              ds2.filters = dcr;
+              setDataSource({ ...getDataSource });
+            }} />
         </div>);
     }
 
     if (getTab === 'aggregation') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings.agentTransform.transform;
-      if (!ds2) {
-        ds2 = {};
-      }
+      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+      let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
       tab.push(
         <div key={tab.length} className='container'>
-          <AggregationTab DataSource={DataSource[getFields]} Dcr={ds2} Update={(dcr) => {
-            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
-            setDataSource({ ...getDataSource });
-          }} />
+          <AggregationTab DataSource={DataSource[getFields]}
+            ParseDcr={parseDcr.parse}
+            Dcr={ds2.aggregates}
+            Update={(dcr) => {
+              let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+              ds2.aggregates = dcr;
+              setDataSource({ ...getDataSource });
+            }} />
         </div>);
     }
 
     if (getTab === 'select') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings;
-      if (!ds2) {
-        ds2 = [];
-      }
+      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+      let aggDcr = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+      let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
       tab.push(
         <div key={tab.length} className='container'>
-          <SelectTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
-            getDataSource[getSelectedDataSource].extSettings.agentTransform.transform = dcr;
-            setDataSource({ ...getDataSource });
-          }} />
+          <SelectTab DataSource={DataSource[getFields]}
+            DcrRoot={getDcr}
+            ParseDcr={parseDcr.parse}
+            AggDcr={aggDcr.aggregates}
+            Dcr={ds2.selectFields}
+            Update={(dcr) => {
+              let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+              ds2.selectFields = dcr;
+              setDataSource({ ...getDataSource });
+            }}
+          />
         </div>);
     }
 

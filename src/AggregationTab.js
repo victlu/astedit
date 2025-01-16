@@ -9,17 +9,13 @@ function AggregationTab(props) {
     // scrub out invalids
     let dcr = props.Dcr;
 
-    if (!dcr.aggregates) {
-      dcr.aggregates = {};
-    }
-
     let columns = getColumns();
     TransformGroups.forEach(grp => {
       let list = [];
 
       let dirty = false;
 
-      let org = dcr.aggregates[grp];
+      let org = dcr[grp];
       if (!org) {
         org = [];
       }
@@ -40,7 +36,7 @@ function AggregationTab(props) {
         }
       })
 
-      dcr.aggregates[grp] = list;
+      dcr[grp] = list;
 
       if (dirty)
       {
@@ -62,8 +58,8 @@ function AggregationTab(props) {
       columns.push(item);
     });
 
-    if (props.Dcr?.parse) {
-      Object.keys(props.Dcr?.parse).forEach(item => {
+    if (props.ParseDcr) {
+      Object.keys(props.ParseDcr).forEach(item => {
         columns.push({
           col: item,
           ty: 'string',
@@ -84,7 +80,7 @@ function AggregationTab(props) {
         let list = [];
 
         let found = false;
-        dcr.aggregates[grp].forEach(item => {
+        dcr[grp].forEach(item => {
           if (item === col) {
             found = true;
           }
@@ -96,7 +92,7 @@ function AggregationTab(props) {
           list.push(col);
         }
 
-        dcr.aggregates[grp] = list;
+        dcr[grp] = list;
       }
     })
 
@@ -134,7 +130,7 @@ function AggregationTab(props) {
 
   let columns = getColumns();
 
-  let aggs = ReadDcrProps().aggregates;
+  let aggs = ReadDcrProps();
 
   let terms = ['distinct', 'min', 'max', 'avg', 'sum']
   terms.forEach(term => {

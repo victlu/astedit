@@ -3,17 +3,11 @@ import './App.css';
 
 function FilterTab(props) {
   const ReadDcrProps = () => {
-    let p = props.Dcr?.agentTransform?.transform?.filters;
-    if (!p) {
-      p = [];
-    }
-    return p;
+    return props.Dcr;
   }
 
   const SaveDcrProps = (dcr) => {
-    let p = props.Dcr;
-    p.agentTransform.transform.filters = dcr;
-    props.Update(p);
+    props.Update(dcr);
   }
 
   const clickAddGroup = (e, i) => {
@@ -88,7 +82,7 @@ function FilterTab(props) {
     field_desc[o.col] = o.desc;
   });
 
-  let dcr2 = props.Dcr?.agentTransform?.transform?.parse;
+  let dcr2 = props.ParseDcr;
   if (dcr2) {
     Object.keys(dcr2).forEach(item => {
       field_elem.push(<option key={field_elem.length}>{item}</option>);
