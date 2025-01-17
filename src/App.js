@@ -102,12 +102,23 @@ function App() {
   }
 
   const getTransformSection = (kind, transform) => {
+
+    const sortorder = { parse: 0, filters: 1, aggregates: 2, selectFields: 3 };
+
+    let insertIdx = transform.length;
+
     let ret;
+    let idx = 0;
     transform.forEach(t => {
       if (t.Kind === kind) {
         ret = t;
       }
+      if (sortorder[t.Kind] > sortorder[kind]) {
+        insertIdx = idx;
+      }
+      idx++;
     });
+
     if (!ret) {
       ret = {
         Kind: kind,
@@ -117,8 +128,8 @@ function App() {
       } else {
         ret[kind] = {};
       }
-      transform.push(ret);
-      ret = transform[transform.length - 1];
+
+      transform.splice(insertIdx, 0, ret);
     }
     return ret;
   }
@@ -190,9 +201,21 @@ function App() {
           if (!founditem) {
             founditem = {
               name: dsitem.name,
-              streams: []
             }
             extension.extensionSettings[key].push(founditem)
+          }
+
+          if (!founditem.streams) {
+            founditem.streams = [];
+          }
+
+          if (founditem.streams.length === 0) {
+            if (dcr?.properties?.streamDeclarations) {
+              let tbl = Object.keys(dcr.properties.streamDeclarations)[0];
+              if (tbl) {
+                founditem.streams.push(tbl);
+              }
+            }
           }
 
           //Normalize all fields
@@ -209,10 +232,12 @@ function App() {
             founditem.agentTransform.transform = []
           }
 
-          getTransformSection("parse", founditem.agentTransform.transform)
-          getTransformSection("filters", founditem.agentTransform.transform)
-          getTransformSection("aggregates", founditem.agentTransform.transform)
-          getTransformSection("selectFields", founditem.agentTransform.transform)
+          if (Object.prototype.toString.apply(founditem.agentTransform.transform) === '[object Array]') {
+            getTransformSection("parse", founditem.agentTransform.transform)
+            getTransformSection("filters", founditem.agentTransform.transform)
+            getTransformSection("aggregates", founditem.agentTransform.transform)
+            getTransformSection("selectFields", founditem.agentTransform.transform)
+          }
 
           ds[id].extSettings = founditem
         })
@@ -228,15 +253,59 @@ function App() {
       if (!extSettings[item.type]) {
         extSettings[item.type] = []
       }
-      extSettings[item.type].push(item.extSettings)
+
+      let ext = JSON.parse(JSON.stringify(item.extSettings));
+
+      // remove empty transform sections...
+      let transform = ext.agentTransform.transform;
+      let i = 0;
+      while (i < transform.length) {
+        let isDelete = false;
+
+        if (transform[i].Kind === "parse" && Object.keys(transform[i].parse).length === 0) {
+          isDelete = true;
+        }
+        if (transform[i].Kind === "filters" && transform[i].filters.length === 0) {
+          isDelete = true;
+        }
+        if (transform[i].Kind === "aggregates") {
+          if (transform[i]?.aggregates?.distinct?.length === 0) delete transform[i]?.aggregates?.distinct;
+          if (transform[i]?.aggregates?.max?.length === 0) delete transform[i]?.aggregates?.max;
+          if (transform[i]?.aggregates?.min?.length === 0) delete transform[i]?.aggregates?.min;
+          if (transform[i]?.aggregates?.avg?.length === 0) delete transform[i]?.aggregates?.avg;
+          if (transform[i]?.aggregates?.sum?.length === 0) delete transform[i]?.aggregates?.sum;
+
+          if (Object.keys(transform[i]?.aggregates).length === 0) {
+            isDelete = true;
+          }
+        }
+        if (transform[i].Kind === "selectFields" && transform[i].selectFields.length === 0) {
+          isDelete = true;
+        }
+
+        if (isDelete) {
+          transform.splice(i, 1);
+        }
+        else {
+          i++;
+        }
+      }
+
+      if (transform.length === 0) {
+        delete ext.agentTransform.transform;
+      }
+
+      extSettings[item.type].push(ext)
     })
 
-    let dcr = getDcr
+    let dcr = JSON.parse(JSON.stringify(getDcr));
     dcr.properties.dataSources.extensions.forEach((item) => {
       if (item.extensionName === 'AgentSideTransformExtension') {
         item.extensionSettings = extSettings
       }
     })
+
+    console.log("[PrepareOutputDcr]", dcr);
 
     return dcr;
   }
@@ -264,6 +333,15 @@ function App() {
     setToken(token)
     setDataSource(ds)
     setSelectedDataSource()
+  }
+
+  const IsValidTransformOrder = (transform) => {
+    let kind = [];
+    transform.forEach(item => {
+      kind.push(item.Kind);
+    });
+    let k = kind.join(",");
+    return k === "parse,filters,aggregates,selectFields";
   }
 
   // **********************************
@@ -344,17 +422,30 @@ function App() {
     <hr />
   </div>)
 
-  let hasStreamDeclarations = false;
-  if (getDcr?.properties?.streamDeclarations && Object.keys(getDcr.properties.streamDeclarations).length > 0) {
-    hasStreamDeclarations = true;
-  }
+  let hasError = false;
 
-  if (!hasStreamDeclarations && getDataSource) {
+  if (getDataSource && (!getDcr?.properties?.streamDeclarations || Object.keys(getDcr.properties.streamDeclarations).length === 0)) {
     body.push(<div className="mb-3">This DCR does not have streamDeclartions defined.</div>)
     body.push(<div>AST requires Custom-Table to be pre-created and declared in DCR via the streamDeclarations section.</div>)
+    hasError = true;
   }
 
-  if (hasStreamDeclarations && getDataSource) {
+  if (!hasError && getDataSource) {
+    Object.values(getDataSource).forEach((item) => {
+      let ty = Object.prototype.toString.apply(item?.extSettings?.agentTransform?.transform);
+      if (ty === '[object Array]') {
+        if (!IsValidTransformOrder(item.extSettings.agentTransform.transform)) {
+          body.push(<div>DCR has unsupported AST format (order of transform) for <b>{item.name}</b>.</div>);
+          hasError = true;
+        }
+      } else {
+        body.push(<div>DCR has incompatible AST format for <b>{item.name}</b>.</div>)
+        hasError = true;
+      }
+    });
+  }
+
+  if (!hasError && getDataSource) {
     let items = [];
 
     items.push(<div key={items.length} className="mx-4 mb-2"><h6>Available Data Sources</h6></div>);
@@ -387,116 +478,116 @@ function App() {
       {items}
       <hr />
     </div>);
-  }
 
-  // **********************************
+    // **********************************
 
-  if (getSelectedDataSource && getSelectedDataSource >= 0) {
-    let tab = []
+    if (getSelectedDataSource && getSelectedDataSource >= 0) {
+      let tab = []
 
-    console.log("[App] extSettings:", getDataSource[getSelectedDataSource].extSettings)
+      console.log("[App] extSettings:", getDataSource[getSelectedDataSource].extSettings)
 
-    if (!getTab) {
-      tab.push(<div key={tab.length} className='container'>
-        <div className="mb-3">
-          Select a Tab above.
+      if (!getTab) {
+        tab.push(<div key={tab.length} className='container'>
+          <div className="mb-3">
+            Select a Tab above.
+          </div>
+        </div>)
+      }
+
+      if (getTab === 'setting') {
+        let ds2 = getDataSource[getSelectedDataSource].extSettings;
+        if (!ds2) {
+          ds2 = {};
+        }
+        tab.push(
+          <div key={tab.length} className='container'>
+            <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
+              getDataSource[getSelectedDataSource].extSettings = dcr;
+              setDataSource({ ...getDataSource });
+            }} />
+          </div>);
+      }
+
+      if (getTab === 'parse') {
+        let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        tab.push(
+          <div key={tab.length} className='container'>
+            <ParseTab DataSource={DataSource[getFields]}
+              Dcr={ds2.parse}
+              Update={(dcr) => {
+                let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.parse = dcr;
+                setDataSource({ ...getDataSource });
+              }} />
+          </div>);
+      }
+
+      if (getTab === 'filter') {
+        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        tab.push(
+          <div key={tab.length} className='container'>
+            <FilterTab DataSource={DataSource[getFields]}
+              DcrRoot={getDcr}
+              ParseDcr={parseDcr.parse}
+              Dcr={ds2.filters}
+              Update={(dcr) => {
+                let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.filters = dcr;
+                setDataSource({ ...getDataSource });
+              }} />
+          </div>);
+      }
+
+      if (getTab === 'aggregation') {
+        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        tab.push(
+          <div key={tab.length} className='container'>
+            <AggregationTab DataSource={DataSource[getFields]}
+              ParseDcr={parseDcr.parse}
+              Dcr={ds2.aggregates}
+              Update={(dcr) => {
+                let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.aggregates = dcr;
+                setDataSource({ ...getDataSource });
+              }} />
+          </div>);
+      }
+
+      if (getTab === 'select') {
+        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let aggDcr = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        tab.push(
+          <div key={tab.length} className='container'>
+            <SelectTab DataSource={DataSource[getFields]}
+              DcrRoot={getDcr}
+              ParseDcr={parseDcr.parse}
+              AggDcr={aggDcr.aggregates}
+              Dcr={ds2.selectFields}
+              Update={(dcr) => {
+                let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.selectFields = dcr;
+                setDataSource({ ...getDataSource });
+              }}
+            />
+          </div>);
+      }
+
+      body.push(<div key={body.length}>
+        <div className='mb-3'>
+          <h3>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Settings</span>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'parse' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('parse') }}>Parse</span>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'select' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('select') }}>Select</span>
+          </h3>
         </div>
+        {tab}
       </div>)
     }
-
-    if (getTab === 'setting') {
-      let ds2 = getDataSource[getSelectedDataSource].extSettings;
-      if (!ds2) {
-        ds2 = {};
-      }
-      tab.push(
-        <div key={tab.length} className='container'>
-          <SettingTab DataSource={DataSource[getFields]} DcrRoot={getDcr} Dcr={ds2} Update={(dcr) => {
-            getDataSource[getSelectedDataSource].extSettings = dcr;
-            setDataSource({ ...getDataSource });
-          }} />
-        </div>);
-    }
-
-    if (getTab === 'parse') {
-      let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      tab.push(
-        <div key={tab.length} className='container'>
-          <ParseTab DataSource={DataSource[getFields]}
-            Dcr={ds2.parse}
-            Update={(dcr) => {
-              let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-              ds2.parse = dcr;
-              setDataSource({ ...getDataSource });
-            }} />
-        </div>);
-    }
-
-    if (getTab === 'filter') {
-      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      tab.push(
-        <div key={tab.length} className='container'>
-          <FilterTab DataSource={DataSource[getFields]}
-            DcrRoot={getDcr}
-            ParseDcr={parseDcr.parse}
-            Dcr={ds2.filters}
-            Update={(dcr) => {
-              let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-              ds2.filters = dcr;
-              setDataSource({ ...getDataSource });
-            }} />
-        </div>);
-    }
-
-    if (getTab === 'aggregation') {
-      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      tab.push(
-        <div key={tab.length} className='container'>
-          <AggregationTab DataSource={DataSource[getFields]}
-            ParseDcr={parseDcr.parse}
-            Dcr={ds2.aggregates}
-            Update={(dcr) => {
-              let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-              ds2.aggregates = dcr;
-              setDataSource({ ...getDataSource });
-            }} />
-        </div>);
-    }
-
-    if (getTab === 'select') {
-      let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      let aggDcr = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-      tab.push(
-        <div key={tab.length} className='container'>
-          <SelectTab DataSource={DataSource[getFields]}
-            DcrRoot={getDcr}
-            ParseDcr={parseDcr.parse}
-            AggDcr={aggDcr.aggregates}
-            Dcr={ds2.selectFields}
-            Update={(dcr) => {
-              let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-              ds2.selectFields = dcr;
-              setDataSource({ ...getDataSource });
-            }}
-          />
-        </div>);
-    }
-
-    body.push(<div key={body.length}>
-      <div className='mb-3'>
-        <h3>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Settings</span>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'parse' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('parse') }}>Parse</span>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
-          <span className={'badge cursor-clickable mx-1 ' + (getTab === 'select' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('select') }}>Select</span>
-        </h3>
-      </div>
-      {tab}
-    </div>)
   }
 
   return (
