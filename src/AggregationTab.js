@@ -58,8 +58,8 @@ function AggregationTab(props) {
       columns.push(item);
     });
 
-    if (props.ParseDcr) {
-      Object.keys(props.ParseDcr).forEach(item => {
+    if (props.ExtendDcr) {
+      Object.keys(props.ExtendDcr).forEach(item => {
         columns.push({
           col: item,
           ty: 'string',

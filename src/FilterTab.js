@@ -82,7 +82,7 @@ function FilterTab(props) {
     field_desc[o.col] = o.desc;
   });
 
-  let dcr2 = props.ParseDcr;
+  let dcr2 = props.ExtendDcr;
   if (dcr2) {
     Object.keys(dcr2).forEach(item => {
       field_elem.push(<option key={field_elem.length}>{item}</option>);

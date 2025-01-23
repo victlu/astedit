@@ -5,7 +5,7 @@ import { CheckIcon, SquareIcon } from './icons';
 import { Link } from "react-router-dom";
 import FetchDCR from './FetchDCR';
 import PostDCR from './PostDCR';
-import ParseTab from './ParseTab';
+import ExtendTab from './ExtendTab';
 import SelectTab from './SelectTab';
 import SettingTab from './SettingTab';
 import AggregationTab from './AggregationTab';
@@ -103,7 +103,7 @@ function App() {
 
   const getTransformSection = (kind, transform) => {
 
-    const sortorder = { parse: 0, filters: 1, aggregates: 2, selectFields: 3 };
+    const sortorder = { extend: 0, filters: 1, aggregates: 2, selectFields: 3 };
 
     let insertIdx = transform.length;
 
@@ -233,7 +233,7 @@ function App() {
           }
 
           if (Object.prototype.toString.apply(founditem.agentTransform.transform) === '[object Array]') {
-            getTransformSection("parse", founditem.agentTransform.transform)
+            getTransformSection("extend", founditem.agentTransform.transform)
             getTransformSection("filters", founditem.agentTransform.transform)
             getTransformSection("aggregates", founditem.agentTransform.transform)
             getTransformSection("selectFields", founditem.agentTransform.transform)
@@ -262,7 +262,7 @@ function App() {
       while (i < transform.length) {
         let isDelete = false;
 
-        if (transform[i].Kind === "parse" && Object.keys(transform[i].parse).length === 0) {
+        if (transform[i].Kind === "extend" && Object.keys(transform[i].extend).length === 0) {
           isDelete = true;
         }
         if (transform[i].Kind === "filters" && transform[i].filters.length === 0) {
@@ -341,7 +341,7 @@ function App() {
       kind.push(item.Kind);
     });
     let k = kind.join(",");
-    return k === "parse,filters,aggregates,selectFields";
+    return k === "extend,filters,aggregates,selectFields";
   }
 
   // **********************************
@@ -508,28 +508,28 @@ function App() {
           </div>);
       }
 
-      if (getTab === 'parse') {
-        let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+      if (getTab === 'extend') {
+        let ds2 = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
-            <ParseTab DataSource={DataSource[getFields]}
-              Dcr={ds2.parse}
+            <ExtendTab DataSource={DataSource[getFields]}
+              Dcr={ds2.extend}
               Update={(dcr) => {
-                let ds2 = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-                ds2.parse = dcr;
+                let ds2 = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.extend = dcr;
                 setDataSource({ ...getDataSource });
               }} />
           </div>);
       }
 
       if (getTab === 'filter') {
-        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <FilterTab DataSource={DataSource[getFields]}
               DcrRoot={getDcr}
-              ParseDcr={parseDcr.parse}
+              ExtendDcr={extendDcr.extend}
               Dcr={ds2.filters}
               Update={(dcr) => {
                 let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
@@ -540,12 +540,12 @@ function App() {
       }
 
       if (getTab === 'aggregation') {
-        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <AggregationTab DataSource={DataSource[getFields]}
-              ParseDcr={parseDcr.parse}
+              ExtendDcr={extendDcr.extend}
               Dcr={ds2.aggregates}
               Update={(dcr) => {
                 let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
@@ -556,14 +556,14 @@ function App() {
       }
 
       if (getTab === 'select') {
-        let parseDcr = getTransformSection("parse", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         let aggDcr = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <SelectTab DataSource={DataSource[getFields]}
               DcrRoot={getDcr}
-              ParseDcr={parseDcr.parse}
+              ExtendDcr={extendDcr.extend}
               AggDcr={aggDcr.aggregates}
               Dcr={ds2.selectFields}
               Update={(dcr) => {
@@ -579,7 +579,7 @@ function App() {
         <div className='mb-3'>
           <h3>
             <span className={'badge cursor-clickable mx-1 ' + (getTab === 'setting' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('setting') }}>Settings</span>
-            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'parse' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('parse') }}>Parse</span>
+            <span className={'badge cursor-clickable mx-1 ' + (getTab === 'extend' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('extend') }}>Extend</span>
             <span className={'badge cursor-clickable mx-1 ' + (getTab === 'filter' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('filter') }}>Filters</span>
             <span className={'badge cursor-clickable mx-1 ' + (getTab === 'aggregation' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('aggregation') }}>Aggregations</span>
             <span className={'badge cursor-clickable mx-1 ' + (getTab === 'select' ? 'bg-primary' : 'bg-secondary')} onClick={e => { setTab('select') }}>Select</span>

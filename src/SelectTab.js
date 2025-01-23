@@ -109,8 +109,8 @@ function SelectTab(props) {
       field_elem.push(o.col);
     });
 
-    if (props.ParseDcr) {
-      Object.keys(props.ParseDcr).forEach(item => {
+    if (props.ExtendDcr) {
+      Object.keys(props.ExtendDcr).forEach(item => {
         field_elem.push(item);
       })
     }
