@@ -1,6 +1,11 @@
 import React from 'react';
 import './App.css';
 
+let cef_fields = [
+  "act", "app", "cat", "cnt", "DeviceVendor", "DeviceProduct", "DeviceVersion",
+  "destinationDnsDomain", "destinationServiceName"
+];
+
 function ExtendTab(props) {
   const lookup = {
     xmlParser: ["field", "xPathQuery"],
@@ -22,7 +27,7 @@ function ExtendTab(props) {
       e.parser = o.evalType;
       lookup[o.evalType].forEach(field => {
         let v = o1[field];
-        e[e.parser + '_' + field] = v?v:"";
+        e[e.parser + '_' + field] = v ? v : "";
       });
       p.push(e);
     });
@@ -41,7 +46,7 @@ function ExtendTab(props) {
       let o1 = o[ent.parser];
 
       lookup[ent.parser].forEach(f => {
-        let v = ent?.[ent.parser + '_' + f]; 
+        let v = ent?.[ent.parser + '_' + f];
         o1[f] = v;
       });
     });
@@ -202,7 +207,7 @@ function ExtendTab(props) {
           }}
           value={item.regExParser_regExPattern} />
         <span className="fw-light" style={{ fontSize: '12px' }}>
-          e.g. TBD
+          e.g. .....$
         </span>
       </div>
     );
@@ -219,7 +224,7 @@ function ExtendTab(props) {
     </div>);
 
     parser_body.push(
-      <div className="col col-3 mb-4">
+      <div className="col col-3 mb-1">
         <select className="form-select" value={item.cefParser_field}
           onChange={(e) => {
             item.cefParser_field = e.target.value;
@@ -231,6 +236,11 @@ function ExtendTab(props) {
       </div>
     );
 
+    let parser_cef_select = [];
+    cef_fields.forEach(field => {
+      parser_cef_select.push(<option>{field}</option>)
+    });
+
     parser_header.push(
       <div className="col col-4 text-start fw-light mb-1">
         CEF Field
@@ -239,12 +249,29 @@ function ExtendTab(props) {
 
     parser_body.push(
       <div className="col col-4">
-        <input className="form-control" type='text'
-          onChange={(e) => {
-            item.cefParser_keyToExtract = e.target.value;
-            UpdateParseField(n1, item);
-          }}
-          value={item.cefParser_keyToExtract} />
+        <span className="container p-0 m-0">
+          <span className="row gx-0">
+            <span className="col col-7">
+              <input className="form-control" type='text'
+                onChange={(e) => {
+                  item.cefParser_keyToExtract = e.target.value;
+                  UpdateParseField(n1, item);
+                }}
+                value={item.cefParser_keyToExtract} />
+            </span>
+            <span className="col col-5">
+              <select className="form-select"
+                value=""
+                onChange={e => {
+                  item.cefParser_keyToExtract = e.target.value;
+                  UpdateParseField(n1, item);
+                }}>
+                <option></option>
+                {parser_cef_select}
+              </select>
+            </span>
+          </span>
+        </span>
       </div>
     );
 
@@ -290,7 +317,7 @@ function ExtendTab(props) {
     );
 
     parser_header.push(
-      <div className="col col-1 text-start fw-light mb-1" style={{fontSize: "14px"}}>
+      <div className="col col-1 text-start fw-light mb-1" style={{ fontSize: "14px" }}>
         Pair Delimiter
       </div>
     );
@@ -307,7 +334,7 @@ function ExtendTab(props) {
     );
 
     parser_header.push(
-      <div className="col col-1 text-start fw-light mb-1" style={{fontSize: "14px"}}>
+      <div className="col col-1 text-start fw-light mb-1" style={{ fontSize: "14px" }}>
         Field Delimiter
       </div>
     );
@@ -334,8 +361,8 @@ function ExtendTab(props) {
     <div key={sections.length} className="container">
       <h4>Extend Fields</h4>
       <div className="mb-3">
-        Specify an existing data source <b>Field</b> used to extract a new <b>Custom Field</b>.
-        You specify the <b>Parser</b> and <b>Path</b> to use for this operation.
+        Define a new <b>Extend Field</b> by using a <b>Parser</b> method to extract a value.
+        Each <b>Parser</b> method has additional required parameters.
       </div>
     </div>
   );
@@ -382,7 +409,7 @@ function ExtendTab(props) {
             Extend Field
           </div>
           <div className="col col-2 text-start fw-light mb-1">
-            Operation
+            Parser
           </div>
           {parser_header}
         </div>
