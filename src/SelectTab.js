@@ -69,53 +69,68 @@ function SelectTab(props) {
   }
   let streamDecl = props.DcrRoot.properties.streamDeclarations[streamSelected];
   streamDecl.columns.forEach(item => {
-    table_fields[item.name] = item.type;
+    if (item.name !== "TimeGenerated") {
+      table_fields[item.name] = item.type;
+    }
   })
 
   let field_elem = [];
+  let field_type = {};
 
   if (props.AggDcr?.distinct) {
     props.AggDcr.distinct.forEach(item => {
-      field_elem.push("distinct_" + item);
+      field_elem.push(item);
+      field_type[item] = "string";
     })
   }
 
   if (props.AggDcr?.avg) {
     props.AggDcr.avg.forEach(item => {
-      field_elem.push("avg_" + item);
+      let f = "avg_" + item;
+      field_elem.push(f);
+      field_type[f] = "float";
     })
   }
 
   if (props.AggDcr?.min) {
     props.AggDcr.min.forEach(item => {
-      field_elem.push("min_" + item);
+      let f = "min_" + item;
+      field_elem.push(f);
+      field_type[f] = "int";
     })
   }
 
   if (props.AggDcr?.max) {
     props.AggDcr.max.forEach(item => {
-      field_elem.push("max_" + item);
+      let f = "max_" + item;
+      field_elem.push(f);
+      field_type[f] = "int";
     })
   }
 
   if (props.AggDcr?.sum) {
     props.AggDcr.sum.forEach(item => {
-      field_elem.push("sum_" + item);
+      let f = "sum_" + item;
+      field_elem.push(f);
+      field_type[f] = "float";
     })
   }
 
   if (field_elem.length === 0) {
     props.DataSource.forEach((o) => {
       field_elem.push(o.col);
+      field_type[o.col] = o.ty;
     });
 
     if (props.ExtendDcr) {
       Object.keys(props.ExtendDcr).forEach(item => {
         field_elem.push(item);
+        field_type[item] = "string";
       })
     }
   } else {
     field_elem.push("ast_count");
+    field_type["ast_count"] = "int";
   }
 
   let selectIdx = {};
@@ -150,6 +165,7 @@ function SelectTab(props) {
   rows.push(
     <div key={rows.length} className="row">
       <div className="col col-4"><b>Field</b></div>
+      <div className="col col-2"><b>Type</b></div>
       <div className="col col-1"><b>Include</b></div>
       <div className="col col-5"><b>Project As</b></div>
     </div>
@@ -174,7 +190,8 @@ function SelectTab(props) {
 
     rows.push(
       <div key={rows.length} className="row mb-2">
-        <div className="col col-4"><option key={field_elem.length}>{item}</option></div>
+        <div className="col col-4"><option>{item}</option></div>
+        <div className="col col-2"><option>{field_type[item]}</option></div>
         <div className="col col-1 cursor-clickable" onClick={() => { ClickSelectField(item); }}>
           {include ? CheckIcon() : SquareIcon()}
         </div>
@@ -216,24 +233,37 @@ function SelectTab(props) {
   let dup = {};
   let p = ReadDcrProps();
   p.forEach(item => {
+    if (item.projectAs === "TimeGenerated") {
+      errors.push(<span>Field <b>{item.field}</b> cannot <i>Project As</i> reserved word <b>TimeGenerated</b>.</span>);
+    }
+
     if (dup[item.projectAs]) {
-      errors.push(<div className="text-danger"><DiamonExclamation /> Field <b>{item.field}</b> has duplicate <i>Project As</i>.</div>);
+      errors.push(<span>Field <b>{item.field}</b> has duplicate <i>Project As</i>.</span>);
+    }
+
+    let ty = table_fields[item.projectAs]
+    if (ty !== field_type[item.field]) {
+      errors.push(<span>Field <b>{item.field}</b> and <b>{item.projectAs}</b> has mismatched types.</span>);
     }
     dup[item.projectAs] = true;
   });
 
   Object.keys(table_fields).forEach(item => {
     if (!dup[item]) {
-      errors.push(<div className="text-danger"><DiamonExclamation /> <i>Project As</i> is missing <b>{item}</b>.</div>);
+      errors.push(<span><i>Project As</i> is missing <b>{item}</b>.</span>);
     }
   });
 
   if (errors.length > 0) {
+    let lines = [];
+    errors.forEach(err => {
+      lines.push(<div className="text-danger"><DiamonExclamation/>&nbsp;{err}</div>);
+    })
     sections.push(
       <div className="container p-2 mt-4"
         style={{ backgroundColor: 'lightgrey' }}
       >
-        {errors}
+        {lines}
       </div>
     )
   }

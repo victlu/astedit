@@ -1,10 +1,7 @@
 import React from 'react';
+import CEF_Fields from './cef_fields.js';
+import { DiamonExclamation } from './icons';
 import './App.css';
-
-let cef_fields = [
-  "act", "app", "cat", "cnt", "DeviceVendor", "DeviceProduct", "DeviceVersion",
-  "destinationDnsDomain", "destinationServiceName"
-];
 
 function ExtendTab(props) {
   const lookup = {
@@ -237,7 +234,7 @@ function ExtendTab(props) {
     );
 
     let parser_cef_select = [];
-    cef_fields.forEach(field => {
+    CEF_Fields.forEach(field => {
       parser_cef_select.push(<option>{field}</option>)
     });
 
@@ -453,6 +450,38 @@ function ExtendTab(props) {
       onClick={AddParseField}
     >Add more fields</span>
   );
+
+  // Check for errors
+
+  let errors = [];
+
+  let dup_detector = {};
+  ReadParseField().forEach(item => {
+    if (dup_detector[item.name]) {
+      errors.push(<span>Extend field <b>{item.name}</b> has duplicates.</span>);
+    }
+    dup_detector[item.name] = true;
+
+    Object.keys(item).forEach(o => {
+      if (!item[o]) {
+        errors.push(<span>Extend field <b>{item.name}</b> is missing value for <i>{o}</i>.</span>);
+      }
+    })
+  });
+
+  if (errors.length > 0) {
+    let lines = [];
+    errors.forEach(err => {
+      lines.push(<div className="text-danger"><DiamonExclamation/>&nbsp;{err}</div>);
+    })
+    sections.push(
+      <div className="container p-2 mt-4"
+        style={{ backgroundColor: 'lightgrey' }}
+      >
+        {lines}
+      </div>
+    )
+  }
 
   return sections;
 }
