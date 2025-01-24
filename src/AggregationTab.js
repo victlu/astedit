@@ -3,7 +3,7 @@ import './App.css';
 import { CheckIcon, SquareIcon } from './icons';
 
 function AggregationTab(props) {
-  const TransformGroups = ["distinct", "min", "max", "avg", "sum"];
+  const TransformGroups = ["groupBy", "min", "max", "avg", "sum"];
 
   const ReadDcrProps = () => {
     // scrub out invalids
@@ -54,6 +54,11 @@ function AggregationTab(props) {
   const getColumns = () => {
     let columns = [];
 
+    columns.push({
+      col: "TimeGenerated",
+      ty: "datetime",
+    });
+
     props.DataSource.forEach(item => {
       columns.push(item);
     });
@@ -71,8 +76,6 @@ function AggregationTab(props) {
   }
 
   const ClickBox = (col, agg) => {
-    console.log("ClickBox", col, agg)
-
     let dcr = ReadDcrProps();
 
     TransformGroups.forEach(grp => {
@@ -121,9 +124,9 @@ function AggregationTab(props) {
   fields.push(<div key={fields.length} className='row'>
     <span className='col col-4' style={headerStyle}>Column name</span>
     <span className='col col-1' style={headerStyle}>Type</span>
-    <span className='col col-1' style={headerStyle}>Distinct</span>
-    <span className='col col-1' style={headerStyle}>Min</span>
-    <span className='col col-1' style={headerStyle}>Max</span>
+    <span className='col col-1' style={headerStyle}>Group By</span>
+    <span className='col col-1' style={headerStyle}>Minimum</span>
+    <span className='col col-1' style={headerStyle}>Maximum</span>
     <span className='col col-1' style={headerStyle}>Average</span>
     <span className='col col-1' style={headerStyle}>Sum</span>
   </div>)
@@ -132,7 +135,7 @@ function AggregationTab(props) {
 
   let aggs = ReadDcrProps();
 
-  let terms = ['distinct', 'min', 'max', 'avg', 'sum']
+  let terms = ['groupBy', 'min', 'max', 'avg', 'sum']
   terms.forEach(term => {
     if (!aggs[term]) {
       aggs[term] = []
@@ -140,25 +143,29 @@ function AggregationTab(props) {
   });
 
   columns.forEach(item => {
-    let distinct = null
+    let groupBy = null
     let min = null
     let max = null
     let avg = null
     let sum = null
 
     if (item.ty === 'string') {
-      distinct = false
+      groupBy = false
     }
-    else if (item.ty === 'int' || item.ty === 'float' || item.ty === 'datetime') {
+    else if (item.ty === 'int' || item.ty === 'float') {
       min = false
       max = false
       avg = false
       sum = false
     }
+    else if (item.ty === 'datetime') {
+      min = false;
+      max = false;
+    }
 
-    aggs.distinct.forEach(col => {
+    aggs.groupBy.forEach(col => {
       if (item.col === col) {
-        distinct = true
+        groupBy = true
       }
     })
 
@@ -189,8 +196,8 @@ function AggregationTab(props) {
     fields.push(<div key={fields.length} className='row'>
       <span className='col col-4'>{item.col}</span>
       <span className='col col-1'>{item.ty}</span>
-      {distinct !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'distinct')}>
-        {distinct ? CheckIcon() : SquareIcon()}
+      {groupBy !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'groupBy')}>
+        {groupBy ? CheckIcon() : SquareIcon()}
       </span>
         :
         <span className='col col-1'></span>

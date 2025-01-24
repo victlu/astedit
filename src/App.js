@@ -269,7 +269,7 @@ function App() {
           isDelete = true;
         }
         if (transform[i].Kind === "aggregates") {
-          if (transform[i]?.aggregates?.distinct?.length === 0) delete transform[i]?.aggregates?.distinct;
+          if (transform[i]?.aggregates?.groupBy?.length === 0) delete transform[i]?.aggregates?.groupBy;
           if (transform[i]?.aggregates?.max?.length === 0) delete transform[i]?.aggregates?.max;
           if (transform[i]?.aggregates?.min?.length === 0) delete transform[i]?.aggregates?.min;
           if (transform[i]?.aggregates?.avg?.length === 0) delete transform[i]?.aggregates?.avg;

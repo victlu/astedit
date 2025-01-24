@@ -77,8 +77,13 @@ function SelectTab(props) {
   let field_elem = [];
   let field_type = {};
 
-  if (props.AggDcr?.distinct) {
-    props.AggDcr.distinct.forEach(item => {
+  props.DataSource.forEach((o) => {
+    field_type[o.col] = o.ty;
+  });
+  field_type["TimeGenerated"] = "datetime";
+
+  if (props.AggDcr?.groupBy) {
+    props.AggDcr.groupBy.forEach(item => {
       field_elem.push(item);
       field_type[item] = "string";
     })
@@ -96,7 +101,7 @@ function SelectTab(props) {
     props.AggDcr.min.forEach(item => {
       let f = "min_" + item;
       field_elem.push(f);
-      field_type[f] = "int";
+      field_type[f] = field_type[item] === "datetime" ? "datetime" : "int";
     })
   }
 
@@ -104,7 +109,7 @@ function SelectTab(props) {
     props.AggDcr.max.forEach(item => {
       let f = "max_" + item;
       field_elem.push(f);
-      field_type[f] = "int";
+      field_type[f] = field_type[item] === "datetime" ? "datetime" : "int";
     })
   }
 
@@ -117,6 +122,8 @@ function SelectTab(props) {
   }
 
   if (field_elem.length === 0) {
+    field_elem.push("TimeGenerated");
+    field_type["TimeGenerated"] = "datetime";
     props.DataSource.forEach((o) => {
       field_elem.push(o.col);
       field_type[o.col] = o.ty;
@@ -257,7 +264,7 @@ function SelectTab(props) {
   if (errors.length > 0) {
     let lines = [];
     errors.forEach(err => {
-      lines.push(<div className="text-danger"><DiamonExclamation/>&nbsp;{err}</div>);
+      lines.push(<div className="text-danger"><DiamonExclamation />&nbsp;{err}</div>);
     })
     sections.push(
       <div className="container p-2 mt-4"
