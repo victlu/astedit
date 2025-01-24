@@ -1,4 +1,6 @@
 import React from "react";
+import './App.css';
+import { PasteIcon } from './icons';
 
 function FetchDCR(props) {
   const [getStatus, setStatus] = React.useState();
@@ -55,34 +57,99 @@ function FetchDCR(props) {
 
   dialogs.push(
     <div key={dialogs.length} className="container">
+      <div className="row">
+        <span className="col col-2"></span>
+        <span className="col col-10">
+          <div>1. Goto <b>Azure Portal</b> -&gt; <b>Data Collection Rules</b> pane.</div>
+          <div>2. Select your DCR and be on the <b>Overview</b> pane.</div>
+          <div>3. Click on "<b>JSON View</b>".</div>
+          <div>4. Copy <i>Resource ID</i> to clipboard.</div>
+          <div>&nbsp;</div>
+          <div>5. Paste <i>Resource ID</i> below.
+            <span className="cursor-clickable mx-4"
+              onClick={e => {
+                navigator.clipboard.readText().then(text => {
+                  setResId(text);
+                });
+              }}>
+              <PasteIcon />
+            </span>
+          </div>
+        </span>
+      </div>
+
       <div className="row mb-4">
         <span className="col col-2"><b>Resource Id:</b></span>
         <span className="col col-10">
-          <div>
-            Goto Azure Portal | DCR | Overview page<br />
-            Click on "JSON View"<br />
-            Copy <i>Resource ID</i> to clipboard<br />
+          <input placeholder="Paste {Resource ID} here." value={getResId} onChange={(e) => { setResId(e.target.value); }} />
+        </span>
+      </div >
+
+      <div className="row">
+        <span className="col col-2"></span>
+        <span className="col col-10">
+          <div>1. Goto <b>Azure Portal</b> and launch <b>Cloud Shell</b>.</div>
+          <div>2. Run... PS&gt; <b>az account get-access-token --query accessToken</b>
+            <span className="mx-3"><span
+              className="cursor-clickable"
+              onClick={e => {
+                navigator.clipboard.writeText("az account get-access-token --query accessToken");
+              }}>
+              <PasteIcon /></span></span>
           </div>
-          <input placeholder="Paste {Resource ID} here" value={getResId} size={80} onChange={(e) => { setResId(e.target.value); }} />
+          <div>3. Copy <i>Token</i> to clipboard.</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>- OR -</i></div>
+          <div>1. Start Powershell prompt.</div>
+          <div>2. Run... PS&gt; <b>az login</b></div>
+          <div>3. Run... PS&gt; <b>az account get-access-token --query accessToken | clip</b>
+            <span className="mx-3"><span
+              className="cursor-clickable"
+              onClick={e => {
+                navigator.clipboard.writeText("az account get-access-token --query accessToken | clip");
+              }}>
+              <PasteIcon /></span></span>
+          </div>
+          <div>&nbsp;</div>
+          <div>4. Paste <i>Token</i> below.
+            <span className="cursor-clickable mx-4"
+              onClick={e => {
+                navigator.clipboard.readText().then(text => {
+                  setToken(text);
+                });
+              }}>
+              <PasteIcon />
+            </span>
+          </div>
         </span>
       </div>
+
       <div className="row">
         <span className="col col-2"><b>Access Token:</b></span>
         <span className="col col-10">
-          <div>
-            PS &gt; <b>az login</b> -or- launch <b><i>Cloud Shell</i></b> from Azure Portal<br />
-            PS &gt; <b>az account get-access-token --query accessToken</b><br />
-            Copy <i>Token</i> to clipboard<br />
-          </div>
-          <input placeholder="Paste {Token} here" value={getToken} size={80} onChange={(e) => { setToken(e.target.value); }} />
+          <input type="password" placeholder="Paste {Token} here." value={getToken} onChange={(e) => { setToken(e.target.value); }} />
+          <span className="cursor-clickable mx-3" onClick={e=>{navigator.clipboard.writeText(getToken)}}><PasteIcon/></span>
         </span>
       </div>
-      {getStatus &&
-        <div className="row mt-4">
-          <span className="col col-12 text-danger">{getStatus}</span>
+    </div>
+  );
+
+  if (getStatus) {
+    let isOK = getStatus === "OK" ? true : false;
+
+    dialogs.push(
+      <div className="container">
+        <hr />
+        <div className="row">
+          <div className="col col-2">
+            <b>Fetch Status:</b>
+          </div>
+          <div className="col col-10">
+            <span className={"col col-12" + (isOK ? " text-primary" : " text-danger")}>{getStatus}</span>
+          </div>
         </div>
-      }
-    </div>);
+      </div>
+    )
+  }
 
   dialogs.push(
     <div key={dialogs.length}>

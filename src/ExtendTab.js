@@ -1,6 +1,6 @@
 import React from 'react';
 import CEF_Fields from './cef_fields.js';
-import { DiamonExclamation } from './icons';
+import { DiamonExclamationIcon } from './icons';
 import './App.css';
 
 function ExtendTab(props) {
@@ -472,7 +472,7 @@ function ExtendTab(props) {
   if (errors.length > 0) {
     let lines = [];
     errors.forEach(err => {
-      lines.push(<div className="text-danger"><DiamonExclamation/>&nbsp;{err}</div>);
+      lines.push(<div className="text-danger"><DiamonExclamationIcon/>&nbsp;{err}</div>);
     })
     sections.push(
       <div className="container p-2 mt-4"

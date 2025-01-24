@@ -1,13 +1,16 @@
 import React from "react";
+import './App.css';
+import { PasteIcon } from './icons';
 
 function PostDCR(props) {
   const [getStatus, setStatus] = React.useState();
   const [getToken, setToken] = React.useState(props.token);
+  const [getResId, setResId] = React.useState(props.resid);
 
   const OnSubmit = () => {
     let token = getToken.replaceAll("'", '').replaceAll('"', '').replaceAll(' ', '');
 
-    let url = 'https://management.azure.com' + props.resid + '?api-version=2022-06-01';
+    let url = 'https://management.azure.com' + getResId + '?api-version=2022-06-01';
 
     let body = JSON.stringify(props.dcr);
 
@@ -45,11 +48,58 @@ function PostDCR(props) {
 
   dialogs.push(
     <div key={dialogs.length}>
-      <div className="mb-2">Resource ID: {props.resid}</div>
-      <div className="">Access Token: <input value={getToken} size={80} onChange={e => { setToken(e.target.value); }} /></div>
-      {getStatus && <div className="mt-4 text-danger">{getStatus}</div>}
+      <div className="container">
+        <div className="row mb-4">
+          <div className="col col-2">
+            <b>Resource ID:</b>
+          </div>
+          <div className="col col-10">
+            <input placeholder="Paste {Resource ID} here." value={props.resid} onChange={(e) => { setResId(e.target.value); }} />
+          </div>
+        </div>
+        <div className="row">
+          <div className="col col-2"></div>
+          <div className="col col-10">
+            <div>If <i>Token</i> is expired, Paste new <i>Token</i> below.
+              <span className="cursor-clickable mx-4"
+                onClick={e => {
+                  navigator.clipboard.readText().then(text => {
+                    setToken(text);
+                  });
+                }}>
+                <PasteIcon />
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="row mb-4">
+          <div className="col col-2">
+            <b>Access Token:</b>
+          </div>
+          <div className="col col-10">
+            <input type="password" value={getToken} onChange={e => { setToken(e.target.value); }} />
+          </div>
+        </div>
+      </div>
     </div>
   )
+
+  if (getStatus) {
+    let isOK = getStatus === "OK" ? true : false;
+    dialogs.push(
+      <div className="container">
+        <hr />
+        <div className="row">
+          <div className="col col-2">
+            <b>Status:</b>
+          </div>
+          <div className="col col-10">
+            <span className={"col col-12" + (isOK ? " text-primary" : " text-danger")}>{getStatus}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   dialogs.push(
     <div key={dialogs.length}>

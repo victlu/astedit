@@ -415,7 +415,7 @@ function App() {
       {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
 
-      {getResId && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
+      {getFilename && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
 
       {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div>}
     </div>
