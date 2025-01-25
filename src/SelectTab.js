@@ -21,16 +21,18 @@ function SelectTab(props) {
         found = true;
       }
       else {
-        p.push({
+        let p1 = {
           field: item.field,
-          projectAs: item.projectAs,
-        });
+        };
+        if (item.projectAs && item.projectAs.length > 0) {
+          p1.projectAs = item.projectAs;
+        }
+        p.push(p1);
       }
     });
     if (!found) {
       p.push({
         field: field,
-        projectAs: field,
       });
     }
 
@@ -136,8 +138,8 @@ function SelectTab(props) {
       })
     }
   } else {
-    field_elem.push("ast_count");
-    field_type["ast_count"] = "int";
+    field_elem.push("AST_Count");
+    field_type["AST_Count"] = "int";
   }
 
   let selectIdx = {};
@@ -171,10 +173,9 @@ function SelectTab(props) {
 
   rows.push(
     <div key={rows.length} className="row">
-      <div className="col col-4"><b>Field</b></div>
-      <div className="col col-2"><b>Type</b></div>
+      <div className="col col-5"><b>Field</b></div>
       <div className="col col-1"><b>Include</b></div>
-      <div className="col col-5"><b>Project As</b></div>
+      <div className="col col-6"><b>Project As</b></div>
     </div>
   );
 
@@ -192,17 +193,16 @@ function SelectTab(props) {
     column_options.push(<option selected></option>)
     Object.keys(table_fields).forEach(item => {
       let ty = table_fields[item]
-      column_options.push(<option value={item}>{item} ({ty})</option>)
+      column_options.push(<option value={item}>{item}</option>)
     })
 
     rows.push(
       <div key={rows.length} className="row mb-2">
-        <div className="col col-4"><option>{item}</option></div>
-        <div className="col col-2"><option>{field_type[item]}</option></div>
+        <div className="col col-5"><option>{item}</option></div>
         <div className="col col-1 cursor-clickable" onClick={() => { ClickSelectField(item); }}>
           {include ? CheckIcon() : SquareIcon()}
         </div>
-        <div className="col col-5">
+        <div className="col col-6">
           {include &&
             <span style={{ display: 'flex' }}>
               <input className="form-control" type='text'
@@ -240,24 +240,21 @@ function SelectTab(props) {
   let dup = {};
   let p = ReadDcrProps();
   p.forEach(item => {
-    if (item.projectAs === "TimeGenerated") {
-      errors.push(<span>Field <b>{item.field}</b> cannot <i>Project As</i> reserved word <b>TimeGenerated</b>.</span>);
+    let projectAs = item.projectAs && item.projectAs.length > 0 ? item.projectAs : item.field;
+
+    if (projectAs === "TimeGenerated") {
+      errors.push(<span>Field <i>{item.field}</i> cannot Project As <b>TimeGenerated</b>.</span>);
     }
 
-    if (dup[item.projectAs]) {
-      errors.push(<span>Field <b>{item.field}</b> has duplicate <i>Project As</i>.</span>);
+    if (dup[projectAs]) {
+      errors.push(<span>Field <i>{item.field}</i> has a duplicate Project As <b>{projectAs}</b>.</span>);
     }
-
-    let ty = table_fields[item.projectAs]
-    if (ty !== field_type[item.field]) {
-      errors.push(<span>Field <b>{item.field}</b> and <b>{item.projectAs}</b> has mismatched types.</span>);
-    }
-    dup[item.projectAs] = true;
+    dup[projectAs] = true;
   });
 
   Object.keys(table_fields).forEach(item => {
     if (!dup[item]) {
-      errors.push(<span><i>Project As</i> is missing <b>{item}</b>.</span>);
+      errors.push(<span>Missing <b>{item}</b> for output Stream.</span>);
     }
   });
 

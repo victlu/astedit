@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { CheckIcon, SquareIcon } from './icons';
+import { CheckIcon, SquareIcon, DashSquare } from './icons';
 
 function AggregationTab(props) {
   const TransformGroups = ["groupBy", "min", "max", "avg", "sum"];
@@ -30,16 +30,14 @@ function AggregationTab(props) {
         if (found) {
           list.push(item);
         }
-        else
-        {
+        else {
           dirty = true;
         }
       })
 
       dcr[grp] = list;
 
-      if (dirty)
-      {
+      if (dirty) {
         SaveDcrProps(dcr);
       }
     })
@@ -93,6 +91,20 @@ function AggregationTab(props) {
         });
         if (!found) {
           list.push(col);
+
+          // Clean up rest...
+          if (grp === "groupBy") {
+            let grp2 = ["min", "max", "avg", "sum"];
+            grp2.forEach(grp3 => {
+              let list2 = [];
+              dcr[grp3].forEach(o => {
+                if (o !== col) {
+                  list2.push(o);
+                }
+              });
+              dcr[grp3] = list2;
+            });
+          }
         }
 
         dcr[grp] = list;
@@ -123,12 +135,12 @@ function AggregationTab(props) {
 
   fields.push(<div key={fields.length} className='row'>
     <span className='col col-4' style={headerStyle}>Column name</span>
-    <span className='col col-1' style={headerStyle}>Type</span>
-    <span className='col col-1' style={headerStyle}>Group By</span>
-    <span className='col col-1' style={headerStyle}>Minimum</span>
-    <span className='col col-1' style={headerStyle}>Maximum</span>
-    <span className='col col-1' style={headerStyle}>Average</span>
-    <span className='col col-1' style={headerStyle}>Sum</span>
+    <span className='col col-2' style={headerStyle}>Type</span>
+    <span className='col col-1 text-center' style={headerStyle}>GroupBy</span>
+    <span className='col col-1 text-center' style={headerStyle}>Minimum</span>
+    <span className='col col-1 text-center' style={headerStyle}>Maximum</span>
+    <span className='col col-1 text-center' style={headerStyle}>Average</span>
+    <span className='col col-1 text-center' style={headerStyle}>Sum</span>
   </div>)
 
   let columns = getColumns();
@@ -149,14 +161,15 @@ function AggregationTab(props) {
     let avg = null
     let sum = null
 
-    if (item.ty === 'string') {
-      groupBy = false
+    if (item.col !== "TimeGenerated") {
+      groupBy = false;
     }
-    else if (item.ty === 'int' || item.ty === 'float') {
-      min = false
-      max = false
-      avg = false
-      sum = false
+
+    if (item.ty === 'int' || item.ty === 'float') {
+      min = false;
+      max = false;
+      avg = false;
+      sum = false;
     }
     else if (item.ty === 'datetime') {
       min = false;
@@ -165,19 +178,19 @@ function AggregationTab(props) {
 
     aggs.groupBy.forEach(col => {
       if (item.col === col) {
-        groupBy = true
-      }
-    })
-
-    aggs.max.forEach(col => {
-      if (item.col === col) {
-        max = true
+        groupBy = true;
       }
     })
 
     aggs.min.forEach(col => {
       if (item.col === col) {
         min = true
+      }
+    })
+
+    aggs.max.forEach(col => {
+      if (item.col === col) {
+        max = true
       }
     })
 
@@ -195,36 +208,36 @@ function AggregationTab(props) {
 
     fields.push(<div key={fields.length} className='row'>
       <span className='col col-4'>{item.col}</span>
-      <span className='col col-1'>{item.ty}</span>
-      {groupBy !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'groupBy')}>
+      <span className='col col-2'>{item.ty}</span>
+      {groupBy !== null ? <span className='col col-1 cursor-clickable text-center' onClick={() => ClickBox(item.col, 'groupBy')}>
         {groupBy ? CheckIcon() : SquareIcon()}
       </span>
         :
         <span className='col col-1'></span>
       }
-      {min !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'min')}>
-        {min ? CheckIcon() : SquareIcon()}
-      </span>
-        :
-        <span className='col col-1'></span>
+      {min === null ? <span className='col col-1'></span> :
+        groupBy ? <span className='col col-1 text-center'>&ndash;</span> :
+          <span className='col col-1 cursor-clickable text-center' onClick={() => ClickBox(item.col, 'min')}>
+            {min ? CheckIcon() : SquareIcon()}
+          </span>
       }
-      {max !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'max')}>
-        {max ? CheckIcon() : SquareIcon()}
-      </span>
-        :
-        <span className='col col-1'></span>
+      {max === null ? <span className='col col-1'></span> :
+        groupBy ? <span className='col col-1 text-center'>&ndash;</span> :
+          <span className='col col-1 cursor-clickable text-center' onClick={() => ClickBox(item.col, 'max')}>
+            {max ? CheckIcon() : SquareIcon()}
+          </span>
       }
-      {avg !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'avg')}>
-        {avg ? CheckIcon() : SquareIcon()}
-      </span>
-        :
-        <span className='col col-1'></span>
+      {avg === null ? <span className='col col-1'></span> :
+        groupBy ? <span className='col col-1 text-center'>&ndash;</span> :
+          <span className='col col-1 cursor-clickable text-center' onClick={() => ClickBox(item.col, 'avg')}>
+            {avg ? CheckIcon() : SquareIcon()}
+          </span>
       }
-      {sum !== null ? <span className='col col-1 cursor-clickable' onClick={() => ClickBox(item.col, 'sum')}>
-        {sum ? CheckIcon() : SquareIcon()}
-      </span>
-        :
-        <span className='col col-1'></span>
+      {sum === null ? <span className='col col-1'></span> :
+        groupBy ? <span className='col col-1 text-center'>&ndash;</span> :
+          <span className='col col-1 cursor-clickable text-center' onClick={() => ClickBox(item.col, 'sum')}>
+            {sum ? CheckIcon() : SquareIcon()}
+          </span>
       }
     </div>)
   })
