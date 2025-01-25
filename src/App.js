@@ -103,25 +103,25 @@ function App() {
 
   const getTransformSection = (kind, transform) => {
 
-    const sortorder = { extend: 0, filters: 1, aggregates: 2, selectFields: 3 };
+    const sortorder = { extend: 0, filters: 1, aggregate: 2, selectFields: 3 };
 
     let insertIdx = transform.length;
 
     let ret;
     let idx = 0;
     transform.forEach(t => {
-      if (t.Kind === kind) {
+      if (t.kind === kind) {
         ret = t;
       }
-      if (sortorder[t.Kind] > sortorder[kind]) {
-        insertIdx = idx;
+      if (sortorder[kind] < sortorder[t.kind]) {
+        insertIdx = Math.min(insertIdx, idx);
       }
       idx++;
     });
 
     if (!ret) {
       ret = {
-        Kind: kind,
+        kind: kind,
       };
       if (kind === "filters" || kind === "selectFields") {
         ret[kind] = [];
@@ -131,6 +131,7 @@ function App() {
 
       transform.splice(insertIdx, 0, ret);
     }
+
     return ret;
   }
 
@@ -235,7 +236,7 @@ function App() {
           if (Object.prototype.toString.apply(founditem.agentTransform.transform) === '[object Array]') {
             getTransformSection("extend", founditem.agentTransform.transform)
             getTransformSection("filters", founditem.agentTransform.transform)
-            getTransformSection("aggregates", founditem.agentTransform.transform)
+            getTransformSection("aggregate", founditem.agentTransform.transform)
             getTransformSection("selectFields", founditem.agentTransform.transform)
           }
 
@@ -262,24 +263,24 @@ function App() {
       while (i < transform.length) {
         let isDelete = false;
 
-        if (transform[i].Kind === "extend" && Object.keys(transform[i].extend).length === 0) {
+        if (transform[i].kind === "extend" && Object.keys(transform[i].extend).length === 0) {
           isDelete = true;
         }
-        if (transform[i].Kind === "filters" && transform[i].filters.length === 0) {
+        if (transform[i].kind === "filters" && transform[i].filters.length === 0) {
           isDelete = true;
         }
-        if (transform[i].Kind === "aggregates") {
-          if (transform[i]?.aggregates?.groupBy?.length === 0) delete transform[i]?.aggregates?.groupBy;
-          if (transform[i]?.aggregates?.max?.length === 0) delete transform[i]?.aggregates?.max;
-          if (transform[i]?.aggregates?.min?.length === 0) delete transform[i]?.aggregates?.min;
-          if (transform[i]?.aggregates?.avg?.length === 0) delete transform[i]?.aggregates?.avg;
-          if (transform[i]?.aggregates?.sum?.length === 0) delete transform[i]?.aggregates?.sum;
+        if (transform[i].kind === "aggregate") {
+          if (transform[i]?.aggregate?.groupBy?.length === 0) delete transform[i]?.aggregate?.groupBy;
+          if (transform[i]?.aggregate?.max?.length === 0) delete transform[i]?.aggregate?.max;
+          if (transform[i]?.aggregate?.min?.length === 0) delete transform[i]?.aggregate?.min;
+          if (transform[i]?.aggregate?.avg?.length === 0) delete transform[i]?.aggregate?.avg;
+          if (transform[i]?.aggregate?.sum?.length === 0) delete transform[i]?.aggregate?.sum;
 
-          if (Object.keys(transform[i]?.aggregates).length === 0) {
+          if (Object.keys(transform[i]?.aggregate).length === 0) {
             isDelete = true;
           }
         }
-        if (transform[i].Kind === "selectFields" && transform[i].selectFields.length === 0) {
+        if (transform[i].kind === "selectFields" && transform[i].selectFields.length === 0) {
           isDelete = true;
         }
 
@@ -338,10 +339,10 @@ function App() {
   const IsValidTransformOrder = (transform) => {
     let kind = [];
     transform.forEach(item => {
-      kind.push(item.Kind);
+      kind.push(item.kind);
     });
     let k = kind.join(",");
-    return k === "extend,filters,aggregates,selectFields";
+    return k === "extend,filters,aggregate,selectFields";
   }
 
   // **********************************
@@ -415,7 +416,7 @@ function App() {
       {getFilename && <span className="badge cursor-clickable bg-success mx-2" onClick={SaveFile}>Save DCR File ...</span>}
       {getFilename && <a href='#' ref={refDownload} className="hidden">Save ...</a>}
 
-      {getFilename && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
+      {(getFilename && getDataSource) && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
 
       {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div>}
     </div>
@@ -541,15 +542,15 @@ function App() {
 
       if (getTab === 'aggregation') {
         let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-        let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let ds2 = getTransformSection("aggregate", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <AggregationTab DataSource={DataSource[getFields]}
               ExtendDcr={extendDcr.extend}
-              Dcr={ds2.aggregates}
+              Dcr={ds2.aggregate}
               Update={(dcr) => {
-                let ds2 = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-                ds2.aggregates = dcr;
+                let ds2 = getTransformSection("aggregate", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.aggregate = dcr;
                 setDataSource({ ...getDataSource });
               }} />
           </div>);
@@ -557,14 +558,14 @@ function App() {
 
       if (getTab === 'select') {
         let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-        let aggDcr = getTransformSection("aggregates", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let aggDcr = getTransformSection("aggregate", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <SelectTab DataSource={DataSource[getFields]}
               DcrRoot={getDcr}
               ExtendDcr={extendDcr.extend}
-              AggDcr={aggDcr.aggregates}
+              AggDcr={aggDcr.aggregate}
               Dcr={ds2.selectFields}
               Update={(dcr) => {
                 let ds2 = getTransformSection("selectFields", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
