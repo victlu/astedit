@@ -251,10 +251,6 @@ function App() {
   const PrepareOutputDcr = () => {
     let extSettings = {}
     Object.values(getDataSource).forEach((item) => {
-      if (!extSettings[item.type]) {
-        extSettings[item.type] = []
-      }
-
       let ext = JSON.parse(JSON.stringify(item.extSettings));
 
       // remove empty transform sections...
@@ -296,7 +292,13 @@ function App() {
         delete ext.agentTransform.transform;
       }
 
-      extSettings[item.type].push(ext)
+      let hasAST = ext.agentTransform.transform ? true : false;
+      if (hasAST) {
+        if (!extSettings[item.type]) {
+          extSettings[item.type] = []
+        }
+        extSettings[item.type].push(ext)
+      }
     })
 
     let dcr = JSON.parse(JSON.stringify(getDcr));
@@ -418,7 +420,7 @@ function App() {
 
       {(getFilename && getDataSource) && <PostDCR dcr={PrepareOutputDcr()} resid={getResId} token={getToken}>Post DCR...</PostDCR>}
 
-      {getFilename && <div className="mt-3">File: <b>{getFilename}</b></div>}
+      {getFilename && <div className="mt-3">{getResId ? "DCR:" : "File:"} <b>{getResId ? getResId : getFilename}</b></div>}
     </div>
     <hr />
   </div>)
