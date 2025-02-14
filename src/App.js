@@ -40,10 +40,10 @@ function App() {
 
     try {
       let json = JSON.parse(jsonText);
-      json.filters.forEach(o => {
+      json.filter.forEach(o => {
         let terms = [];
         o.forEach(i => {
-          terms.push({ field: i.field, op: i.op, value: i.value });
+          terms.push({ field: i.field, operation: i.operation, value: i.value });
         });
         filter.push(terms);
       });
@@ -61,7 +61,7 @@ function App() {
     if (filter) {
       let g = 0;
       filterText += "{"
-      filterText += "\"filters\":["
+      filterText += "\"filter\":["
       for (let group of filter) {
         if (g > 0) {
           filterText += ","
@@ -88,7 +88,7 @@ function App() {
 
           filterText += "{"
           filterText += "\"field\":\"" + term.field + "\","
-          filterText += "\"op\":\"" + term.op + "\","
+          filterText += "\"operation\":\"" + term.operation + "\","
           filterText += "\"value\":" + v
           filterText += "}"
           t++;
@@ -103,7 +103,7 @@ function App() {
 
   const getTransformSection = (kind, transform) => {
 
-    const sortorder = { extend: 0, filters: 1, aggregate: 2, selectFields: 3 };
+    const sortorder = { extend: 0, filter: 1, aggregate: 2, selectFields: 3 };
 
     let insertIdx = transform.length;
 
@@ -123,7 +123,7 @@ function App() {
       ret = {
         kind: kind,
       };
-      if (kind === "filters" || kind === "selectFields") {
+      if (kind === "filter" || kind === "selectFields") {
         ret[kind] = [];
       } else {
         ret[kind] = {};
@@ -235,7 +235,7 @@ function App() {
 
           if (Object.prototype.toString.apply(founditem.agentTransform.transform) === '[object Array]') {
             getTransformSection("extend", founditem.agentTransform.transform)
-            getTransformSection("filters", founditem.agentTransform.transform)
+            getTransformSection("filter", founditem.agentTransform.transform)
             getTransformSection("aggregate", founditem.agentTransform.transform)
             getTransformSection("selectFields", founditem.agentTransform.transform)
           }
@@ -262,7 +262,7 @@ function App() {
         if (transform[i].kind === "extend" && Object.keys(transform[i].extend).length === 0) {
           isDelete = true;
         }
-        if (transform[i].kind === "filters" && transform[i].filters.length === 0) {
+        if (transform[i].kind === "filter" && transform[i].filter.length === 0) {
           isDelete = true;
         }
         if (transform[i].kind === "aggregate") {
@@ -344,7 +344,7 @@ function App() {
       kind.push(item.kind);
     });
     let k = kind.join(",");
-    return k === "extend,filters,aggregate,selectFields";
+    return k === "extend,filter,aggregate,selectFields";
   }
 
   // **********************************
@@ -368,9 +368,9 @@ function App() {
 
       if (getFilter) {
         let filterText = GetFilterJson(getFilter)
-        let filters = JSON.parse(filterText)
+        let filter = JSON.parse(filterText)
 
-        //ds.extSettings.agentTransform.transform.filters = filters.filters
+        //ds.extSettings.agentTransform.transform.filter = filter.filter
       }
     }
   }, [getFilter])
@@ -463,10 +463,10 @@ function App() {
         onClick={(e) => {
           setSelectedDataSource(item.id);
           clickUpdateDataSource(e, item.type);
-          let filters = item.extSettings?.agentTransform?.transform?.filters
-          if (filters) {
+          let filter = item.extSettings?.agentTransform?.transform?.filter
+          if (filter) {
             let text = JSON.stringify({
-              filters: filters
+              filter: filter
             })
             clickUpdateJson(e, text)
           }
@@ -527,16 +527,16 @@ function App() {
 
       if (getTab === 'filter') {
         let extendDcr = getTransformSection("extend", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-        let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+        let ds2 = getTransformSection("filter", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
         tab.push(
           <div key={tab.length} className='container'>
             <FilterTab DataSource={DataSource[getFields]}
               DcrRoot={getDcr}
               ExtendDcr={extendDcr.extend}
-              Dcr={ds2.filters}
+              Dcr={ds2.filter}
               Update={(dcr) => {
-                let ds2 = getTransformSection("filters", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
-                ds2.filters = dcr;
+                let ds2 = getTransformSection("filter", getDataSource[getSelectedDataSource].extSettings.agentTransform.transform);
+                ds2.filter = dcr;
                 setDataSource({ ...getDataSource });
               }} />
           </div>);
