@@ -13,7 +13,7 @@ function FilterTab(props) {
   const clickAddGroup = (e, i) => {
     let filter = ReadDcrProps();
     let firstfield = props.DataSource[0].col
-    let obj = [{ field: firstfield, op: "==", value: "" }];
+    let obj = [{ field: firstfield, operation: "==", value: "" }];
     filter.splice(i + 1, 0, obj);
     SaveDcrProps(filter);
   }
@@ -38,17 +38,17 @@ function FilterTab(props) {
   const clickAddTerm = (e, i, j) => {
     let filter = ReadDcrProps();
     let firstfield = props.DataSource[0].col
-    filter[i].splice(j + 1, 0, { field: firstfield, op: "==", value: "" });
+    filter[i].splice(j + 1, 0, { field: firstfield, operation: "==", value: "" });
     SaveDcrProps(filter);
   }
 
-  const clickUpdateItem = (e, i, j, field, op, val) => {
+  const clickUpdateItem = (e, i, j, field, operation, val) => {
     let filter = ReadDcrProps();
     if (field) {
       filter[i][j].field = field;
     }
-    if (op) {
-      filter[i][j].op = op;
+    if (operation) {
+      filter[i][j].operation = operation;
     }
     filter[i][j].value = val;
 
@@ -63,7 +63,7 @@ function FilterTab(props) {
     <div key={sections.length} className="container">
       <h4>Filter Groups</h4>
       <div className="mb-3">
-        Specify the filters / groups below. Please note: among groups,
+        Specify the filter / groups below. Please note: among groups,
         filter applies to any conditions are true (OR logic).
         Within groups, filter applies to all conditions are true (AND logic)
       </div>
@@ -141,7 +141,7 @@ function FilterTab(props) {
           </div>
           <div className="col col-2">
             <select className="form-select"
-              value={rec.op}
+              value={rec.operation}
               onChange={e => { clickUpdateItem(e, i, j, null, e.target.value, null) }}>
               {op_elem}
             </select>
