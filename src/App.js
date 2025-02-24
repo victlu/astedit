@@ -593,14 +593,16 @@ function App() {
     }
   }
 
+  // <Link className='btn btn-link fs-6' to='/auth'>1</Link>
+  // <Link className='btn btn-link fs-6' to='/auth2'>2</Link>
+
   return (
     <div className="App">
       <header className="App-header">
-        <span>
-          <span className="fs-2">Agent-Side Transform: Filter Editor</span>
-          <Link className='btn btn-link fs-6' to='/auth'>1</Link>
-          <Link className='btn btn-link fs-6' to='/auth2'>2</Link>
-        </span>
+        <div>
+          <span>Agent-Side Transform: Filter Editor</span>
+          <span className="mx-2 fs-6 text-danger">Warning: For testing only. Do not use in Production environment!</span>
+        </div>
       </header>
       <div className="App-body mt-4">
         {body}
