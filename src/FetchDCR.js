@@ -9,12 +9,12 @@ function FetchDCR(props) {
   const [getDCR, setDCR] = React.useState();
 
   const OnFetch = () => {
-    let parts = getResId.replaceAll('"', '').replaceAll(' ', '').split("/");
+    let parts = getResId.toLowerCase().replaceAll('"', '').replaceAll(' ', '').split("/");
     console.log("Parts:", parts);
 
     setDCR();
 
-    if (parts[1] !== "subscriptions" || parts[3] !== "resourceGroups" || parts[7] !== "dataCollectionRules") {
+    if (parts[1] !== "subscriptions" || parts[3] !== "resourcegroups" || parts[7] !== "datacollectionrules") {
       setStatus("Bad Resource Id");
       return;
     }
